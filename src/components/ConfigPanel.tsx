@@ -1,31 +1,32 @@
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { X, Server, Wifi, WifiOff } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { X, Server, Wifi, WifiOff } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ConfigPanelProps {
   onClose: () => void;
 }
 
 export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
-  const [serverUrl, setServerUrl] = useState('http://localhost:8000');
+  const [serverUrl, setServerUrl] = useState("http://localhost:8000");
   const [isConnected, setIsConnected] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [showTimestamps, setShowTimestamps] = useState(true);
-  const [maxMessages, setMaxMessages] = useState('100');
+  const [maxMessages, setMaxMessages] = useState("100");
   const { toast } = useToast();
 
   const testConnection = async () => {
     try {
       const response = await fetch(`${serverUrl}/health`, {
-        method: 'GET',
+        method: "GET",
       });
-      
+      console.log(response);
+
       if (response.ok) {
         setIsConnected(true);
         toast({
@@ -33,13 +34,14 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
           description: "Successfully connected to the AI agent server.",
         });
       } else {
-        throw new Error('Server responded with error');
+        throw new Error("Server responded with error");
       }
     } catch (error) {
       setIsConnected(false);
       toast({
         title: "Connection Failed",
-        description: "Could not connect to the AI agent server. Make sure it's running.",
+        description:
+          "Could not connect to the AI agent server. Make sure it's running.",
         variant: "destructive",
       });
     }
@@ -53,7 +55,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
           <X className="w-4 h-4" />
         </Button>
       </div>
-      
+
       <div className="p-4 space-y-6">
         {/* Server Configuration */}
         <div className="space-y-3">
@@ -61,7 +63,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
             <Label htmlFor="server-url" className="text-sm font-medium">
               Python Agent Server
             </Label>
-            <Badge 
+            <Badge
               variant={isConnected ? "default" : "secondary"}
               className="text-xs"
             >
@@ -78,7 +80,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               )}
             </Badge>
           </div>
-          
+
           <div className="flex gap-2">
             <Input
               id="server-url"
@@ -92,20 +94,25 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               Test
             </Button>
           </div>
-          
+
           <p className="text-xs text-gray-600">
-            URL of your local Python AI agent server. Make sure it has endpoints for /chat and /health.
+            URL of your local Python AI agent server. Make sure it has endpoints
+            for /chat and /health.
           </p>
         </div>
 
         {/* Chat Settings */}
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-gray-900">Chat Settings</h4>
-          
+
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="auto-scroll" className="text-sm">Auto-scroll</Label>
-              <p className="text-xs text-gray-600">Automatically scroll to latest message</p>
+              <Label htmlFor="auto-scroll" className="text-sm">
+                Auto-scroll
+              </Label>
+              <p className="text-xs text-gray-600">
+                Automatically scroll to latest message
+              </p>
             </div>
             <Switch
               id="auto-scroll"
@@ -113,11 +120,15 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               onCheckedChange={setAutoScroll}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="show-timestamps" className="text-sm">Show timestamps</Label>
-              <p className="text-xs text-gray-600">Display message timestamps</p>
+              <Label htmlFor="show-timestamps" className="text-sm">
+                Show timestamps
+              </Label>
+              <p className="text-xs text-gray-600">
+                Display message timestamps
+              </p>
             </div>
             <Switch
               id="show-timestamps"
@@ -125,7 +136,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               onCheckedChange={setShowTimestamps}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="max-messages" className="text-sm">
               Max messages to keep
