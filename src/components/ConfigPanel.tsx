@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
     try {
       const response = await fetch(`${serverUrl}/health`, {
         method: 'GET',
-        timeout: 5000,
       });
       
       if (response.ok) {
