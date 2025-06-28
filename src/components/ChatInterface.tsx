@@ -1,59 +1,98 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, User, Bot } from "lucide-react";
+import { Send, Loader2, User, Bot, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  toolUsed?: string;
-}
+import { chatStorage, ChatMessage, ChatHistory } from "@/utils/chatStorage";
 
 interface ChatInterfaceProps {
   onStatusChange: (status: "idle" | "thinking" | "working") => void;
   onToolUsed: (tool: string) => void;
+  chatId: string;
+  onChatUpdate: (chat: ChatHistory) => void;
 }
 
 export const ChatInterface = ({
   onStatusChange,
   onToolUsed,
+  chatId,
+  onChatUpdate,
 }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "Hello! I'm your AI agent. I can help you with scheduling meetings, searching Wikipedia, web searches, and more. What would you like me to do?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Load chat history on mount or when chatId changes
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    loadChatHistory();
+  }, [chatId]);
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, autoScroll]);
+
+  const loadChatHistory = async () => {
+    try {
+      const chat = await chatStorage.getChatById(chatId);
+      if (chat) {
+        setMessages(chat.messages);
+      } else {
+        // Create new chat with welcome message
+        const welcomeMessage: ChatMessage = {
+          id: "1",
+          role: "assistant",
+          content: "Hello! I'm your AI agent. I can help you with scheduling meetings, searching Wikipedia, web searches, and more. What would you like me to do?",
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMessage]);
+        await saveChatHistory([welcomeMessage]);
+      }
+    } catch (error) {
+      console.error("Failed to load chat history:", error);
+    }
+  };
+
+  const saveChatHistory = async (updatedMessages: ChatMessage[]) => {
+    try {
+      const chat: ChatHistory = {
+        id: chatId,
+        name: updatedMessages.length > 1 
+          ? updatedMessages[1].content.slice(0, 50) + "..." 
+          : "New Chat",
+        messages: updatedMessages,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      await chatStorage.saveChat(chat);
+      onChatUpdate(chat);
+    } catch (error) {
+      console.error("Failed to save chat history:", error);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: input,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
     onStatusChange("thinking");
@@ -66,8 +105,8 @@ export const ChatInterface = ({
         },
         body: JSON.stringify({
           message: input,
-          conversation_id: "default",
-          stream: true, // Optional: let backend know you want a stream
+          conversation_id: chatId,
+          stream: true,
         }),
       });
 
@@ -75,20 +114,19 @@ export const ChatInterface = ({
         throw new Error("Failed to connect to local agent");
       }
 
-      // Create a new assistant message and add it to state
       const assistantId = (Date.now() + 1).toString();
       let assistantContent = "";
       let toolUsed: string | undefined = undefined;
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: assistantId,
-          role: "assistant",
-          content: "",
-          timestamp: new Date(),
-        },
-      ]);
+      const assistantMessage: ChatMessage = {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+      };
+
+      const messagesWithAssistant = [...updatedMessages, assistantMessage];
+      setMessages(messagesWithAssistant);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -99,10 +137,7 @@ export const ChatInterface = ({
         done = doneReading;
         if (value) {
           const chunk = decoder.decode(value, { stream: true });
-          // If your backend sends JSON lines, parse each line
-          // Otherwise, just append the chunk
           try {
-            // Try to parse as JSON line (if backend sends JSON per chunk)
             const lines = chunk.split("\n").filter(Boolean);
             for (const line of lines) {
               const data = JSON.parse(line);
@@ -114,7 +149,6 @@ export const ChatInterface = ({
               }
             }
           } catch {
-            // If not JSON, treat as plain text
             assistantContent += chunk;
           }
 
@@ -128,6 +162,14 @@ export const ChatInterface = ({
         }
       }
 
+      const finalMessages = messagesWithAssistant.map((msg) =>
+        msg.id === assistantId
+          ? { ...msg, content: assistantContent, toolUsed }
+          : msg
+      );
+
+      await saveChatHistory(finalMessages);
+
       if (toolUsed) {
         onToolUsed(toolUsed);
       }
@@ -135,20 +177,21 @@ export const ChatInterface = ({
     } catch (error) {
       console.error("Error:", error);
 
-      const mockResponse: Message = {
+      const mockResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: `I understand you want me to: "${input}". Currently, I'm not connected to the local Python agent. Please make sure your Python agent is running on http://localhost:8000 with a /chat endpoint.`,
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, mockResponse]);
+      const finalMessages = [...updatedMessages, mockResponse];
+      setMessages(finalMessages);
+      await saveChatHistory(finalMessages);
       onStatusChange("idle");
 
       toast({
         title: "Connection Error",
-        description:
-          "Could not connect to local Python agent. Make sure it's running on port 8000.",
+        description: "Could not connect to local Python agent. Make sure it's running on port 8000.",
         variant: "destructive",
       });
     } finally {
@@ -164,65 +207,74 @@ export const ChatInterface = ({
   };
 
   return (
-    <Card className="flex flex-col h-[600px] bg-white/50 backdrop-blur-sm">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Chat with AI Agent
-        </h2>
-      </div>
+    <div className="flex flex-col h-full">
+      <Card className="flex-1 flex flex-col bg-background/50 backdrop-blur-sm min-h-0">
+        <div className="p-4 border-b flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Chat with AI Agent</h2>
+          <div className="flex items-center gap-2">
+            <GripVertical className="w-4 h-4 text-muted-foreground cursor-move" />
+          </div>
+        </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
+        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+          <div className="space-y-4">
+            {messages.map((message) => (
               <div
-                className={`max-w-[80%] p-3 rounded-lg ${
-                  message.role === "user"
-                    ? "bg-blue-600 text-white ml-12"
-                    : "bg-gray-100 text-gray-900 mr-12"
+                key={message.id}
+                className={`flex gap-3 ${
+                  message.role === "user" ? "justify-end" : "justify-start"
                 }`}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", message.content);
+                }}
               >
-                <div className="flex items-start gap-2">
-                  {message.role === "user" ? (
-                    <User className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <Bot className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm">{message.content}</p>
-                    {message.toolUsed && (
-                      <p className="text-xs opacity-75 mt-1">
-                        Used tool: {message.toolUsed}
-                      </p>
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg transition-colors ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground ml-12"
+                      : "bg-muted mr-12"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {message.role === "user" ? (
+                      <User className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <Bot className="w-5 h-5 mt-0.5 flex-shrink-0" />
                     )}
-                    <p className="text-xs opacity-75 mt-1">
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
+                    <div className="flex-1">
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      {message.toolUsed && (
+                        <p className="text-xs opacity-75 mt-1">
+                          Used tool: {message.toolUsed}
+                        </p>
+                      )}
+                      <p className="text-xs opacity-75 mt-1">
+                        {message.timestamp.toLocaleTimeString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 text-gray-900 p-3 rounded-lg mr-12">
-                <div className="flex items-center gap-2">
-                  <Bot className="w-5 h-5" />
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Thinking...</span>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-muted p-3 rounded-lg mr-12">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-5 h-5" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Thinking...</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </Card>
 
-      <div className="p-4 border-t">
+      {/* Sticky Input Section */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t p-4">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -245,6 +297,6 @@ export const ChatInterface = ({
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

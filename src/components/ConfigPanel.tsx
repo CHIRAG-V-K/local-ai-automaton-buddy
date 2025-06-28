@@ -1,12 +1,14 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { X, Server, Wifi, WifiOff } from "lucide-react";
+import { X, Server, Wifi, WifiOff, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAutoConnect } from "@/hooks/useAutoConnect";
 
 interface ConfigPanelProps {
   onClose: () => void;
@@ -14,43 +16,49 @@ interface ConfigPanelProps {
 
 export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
   const [serverUrl, setServerUrl] = useState("http://localhost:8000");
-  const [isConnected, setIsConnected] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [showTimestamps, setShowTimestamps] = useState(true);
   const [maxMessages, setMaxMessages] = useState("100");
+  const [accentColor, setAccentColor] = useState("#3b82f6");
   const { toast } = useToast();
+  const { isConnected, isConnecting, testConnection } = useAutoConnect(serverUrl);
 
-  const testConnection = async () => {
-    try {
-      const response = await fetch(`${serverUrl}/health`, {
-        method: "GET",
-      });
-      console.log(response);
-
-      if (response.ok) {
-        setIsConnected(true);
-        toast({
-          title: "Connection Successful",
-          description: "Successfully connected to the AI agent server.",
-        });
-      } else {
-        throw new Error("Server responded with error");
-      }
-    } catch (error) {
-      setIsConnected(false);
-      toast({
-        title: "Connection Failed",
-        description:
-          "Could not connect to the AI agent server. Make sure it's running.",
-        variant: "destructive",
-      });
+  useEffect(() => {
+    // Load saved settings
+    const savedSettings = localStorage.getItem("aiAgentSettings");
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      setServerUrl(settings.serverUrl || "http://localhost:8000");
+      setAutoScroll(settings.autoScroll ?? true);
+      setShowTimestamps(settings.showTimestamps ?? true);
+      setMaxMessages(settings.maxMessages || "100");
+      setAccentColor(settings.accentColor || "#3b82f6");
     }
+  }, []);
+
+  const saveSettings = () => {
+    const settings = {
+      serverUrl,
+      autoScroll,
+      showTimestamps,
+      maxMessages,
+      accentColor,
+    };
+    localStorage.setItem("aiAgentSettings", JSON.stringify(settings));
+    
+    // Apply accent color
+    document.documentElement.style.setProperty("--accent-color", accentColor);
+    
+    toast({
+      title: "Settings Saved",
+      description: "Your configuration has been saved successfully.",
+    });
   };
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm">
+    <Card className="bg-background/95 backdrop-blur-sm border">
       <div className="p-4 border-b flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Configuration</h3>
+        <h3 className="text-lg font-semibold">Configuration</h3>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="w-4 h-4" />
         </Button>
@@ -67,7 +75,12 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               variant={isConnected ? "default" : "secondary"}
               className="text-xs"
             >
-              {isConnected ? (
+              {isConnecting ? (
+                <>
+                  <Wifi className="w-3 h-3 mr-1 animate-pulse" />
+                  Connecting...
+                </>
+              ) : isConnected ? (
                 <>
                   <Wifi className="w-3 h-3 mr-1" />
                   Connected
@@ -89,28 +102,62 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               placeholder="http://localhost:8000"
               className="flex-1"
             />
-            <Button onClick={testConnection} size="sm" variant="outline">
+            <Button 
+              onClick={() => testConnection()} 
+              size="sm" 
+              variant="outline"
+              disabled={isConnecting}
+            >
               <Server className="w-4 h-4 mr-1" />
               Test
             </Button>
           </div>
 
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted-foreground">
             URL of your local Python AI agent server. Make sure it has endpoints
             for /chat and /health.
           </p>
         </div>
 
+        {/* Appearance Settings */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Appearance
+          </h4>
+
+          <div className="space-y-2">
+            <Label htmlFor="accent-color" className="text-sm">
+              Accent Color
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="accent-color"
+                type="color"
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                className="w-16 h-10 p-1 rounded"
+              />
+              <Input
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                placeholder="#3b82f6"
+                className="flex-1"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Chat Settings */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-gray-900">Chat Settings</h4>
+          <h4 className="text-sm font-medium">Chat Settings</h4>
 
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="auto-scroll" className="text-sm">
                 Auto-scroll
               </Label>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Automatically scroll to latest message
               </p>
             </div>
@@ -126,7 +173,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               <Label htmlFor="show-timestamps" className="text-sm">
                 Show timestamps
               </Label>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Display message timestamps
               </p>
             </div>
@@ -150,7 +197,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               max="1000"
               className="w-full"
             />
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               Maximum number of messages to keep in chat history
             </p>
           </div>
@@ -158,7 +205,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
 
         {/* Available Tools */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-900">Available Tools</h4>
+          <h4 className="text-sm font-medium">Available Tools</h4>
           <div className="grid grid-cols-2 gap-2">
             <Badge variant="outline" className="justify-center py-2">
               📅 Calendar
@@ -173,10 +220,15 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               🌐 Web Search
             </Badge>
           </div>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted-foreground">
             These tools will be available when your Python agent is connected
           </p>
         </div>
+
+        {/* Save Button */}
+        <Button onClick={saveSettings} className="w-full">
+          Save Configuration
+        </Button>
       </div>
     </Card>
   );
