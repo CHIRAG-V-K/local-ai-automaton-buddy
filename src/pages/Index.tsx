@@ -8,13 +8,14 @@ import { ChatHistoryPanel } from '@/components/ChatHistoryPanel';
 import { MobileMenuDrawer } from '@/components/MobileMenuDrawer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
-import { Settings, Bot, History, Plus } from 'lucide-react';
+import { Settings, Bot, History, Plus, Wrench } from 'lucide-react';
 import { chatStorage, ChatHistory } from '@/utils/chatStorage';
 import { useToast } from '@/hooks/use-toast';
 
+type SidebarPanel = 'history' | 'config' | 'tools' | null;
+
 const Index = () => {
-  const [showConfig, setShowConfig] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [activeSidebarPanel, setActiveSidebarPanel] = useState<SidebarPanel>(null);
   const [agentStatus, setAgentStatus] = useState<'idle' | 'thinking' | 'working'>('idle');
   const [lastToolUsed, setLastToolUsed] = useState<string | null>(null);
   const [currentChatId, setCurrentChatId] = useState<string>('');
@@ -39,11 +40,35 @@ const Index = () => {
 
   const handleSelectChat = (chatId: string) => {
     setCurrentChatId(chatId);
-    setShowHistory(false);
+    setActiveSidebarPanel(null);
   };
 
   const handleChatUpdate = (chat: ChatHistory) => {
     setCurrentChat(chat);
+  };
+
+  const handleSidebarToggle = (panel: SidebarPanel) => {
+    setActiveSidebarPanel(activeSidebarPanel === panel ? null : panel);
+  };
+
+  const renderSidebarContent = () => {
+    switch (activeSidebarPanel) {
+      case 'history':
+        return (
+          <ChatHistoryPanel
+            onClose={() => setActiveSidebarPanel(null)}
+            onSelectChat={handleSelectChat}
+            onNewChat={handleNewChat}
+            currentChatId={currentChatId}
+          />
+        );
+      case 'config':
+        return <ConfigPanel onClose={() => setActiveSidebarPanel(null)} />;
+      case 'tools':
+        return <ToolResults />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -77,18 +102,27 @@ const Index = () => {
                   New Chat
                 </Button>
                 <Button
-                  variant="outline"
+                  variant={activeSidebarPanel === 'history' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
+                  onClick={() => handleSidebarToggle('history')}
+                  className="gap-2 border-border bg-background text-foreground hover:bg-accent data-[state=on]:bg-accent"
                 >
                   <History className="w-4 h-4" />
                   History
                 </Button>
                 <Button
-                  variant="outline"
+                  variant={activeSidebarPanel === 'tools' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setShowConfig(!showConfig)}
+                  onClick={() => handleSidebarToggle('tools')}
+                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
+                >
+                  <Wrench className="w-4 h-4" />
+                  Tools
+                </Button>
+                <Button
+                  variant={activeSidebarPanel === 'config' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleSidebarToggle('config')}
                   className="gap-2 border-border bg-background text-foreground hover:bg-accent"
                 >
                   <Settings className="w-4 h-4" />
@@ -127,26 +161,11 @@ const Index = () => {
           </div>
 
           {/* Desktop Sidebar */}
-          <div className="hidden lg:flex flex-col gap-6 w-80 overflow-hidden">
-            {showHistory && (
-              <div className="flex-1 min-h-0">
-                <ChatHistoryPanel
-                  onClose={() => setShowHistory(false)}
-                  onSelectChat={handleSelectChat}
-                  onNewChat={handleNewChat}
-                  currentChatId={currentChatId}
-                />
-              </div>
-            )}
-            {showConfig && (
-              <div className="flex-1 min-h-0">
-                <ConfigPanel onClose={() => setShowConfig(false)} />
-              </div>
-            )}
-            <div className="flex-1 min-h-0">
-              <ToolResults />
+          {activeSidebarPanel && (
+            <div className="hidden lg:flex flex-col w-80 h-full overflow-hidden">
+              {renderSidebarContent()}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

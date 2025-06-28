@@ -15,44 +15,91 @@ interface ConfigPanelProps {
   onClose: () => void;
 }
 
+interface Settings {
+  serverUrl: string;
+  autoScroll: boolean;
+  showTimestamps: boolean;
+  maxMessages: string;
+  accentColor: string;
+}
+
 export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
-  const [serverUrl, setServerUrl] = useState("http://localhost:8000");
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [showTimestamps, setShowTimestamps] = useState(true);
-  const [maxMessages, setMaxMessages] = useState("100");
-  const [accentColor, setAccentColor] = useState("#3b82f6");
+  const [settings, setSettings] = useState<Settings>({
+    serverUrl: "http://localhost:8000",
+    autoScroll: true,
+    showTimestamps: true,
+    maxMessages: "100",
+    accentColor: "#3b82f6",
+  });
+  
   const { toast } = useToast();
-  const { isConnected, isConnecting, testConnection } = useAutoConnect(serverUrl);
+  const { isConnected, isConnecting, testConnection } = useAutoConnect(settings.serverUrl);
 
   useEffect(() => {
     // Load saved settings
     const savedSettings = localStorage.getItem("aiAgentSettings");
     if (savedSettings) {
-      const settings = JSON.parse(savedSettings);
-      setServerUrl(settings.serverUrl || "http://localhost:8000");
-      setAutoScroll(settings.autoScroll ?? true);
-      setShowTimestamps(settings.showTimestamps ?? true);
-      setMaxMessages(settings.maxMessages || "100");
-      setAccentColor(settings.accentColor || "#3b82f6");
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings({
+          serverUrl: parsed.serverUrl || "http://localhost:8000",
+          autoScroll: parsed.autoScroll ?? true,
+          showTimestamps: parsed.showTimestamps ?? true,
+          maxMessages: parsed.maxMessages || "100",
+          accentColor: parsed.accentColor || "#3b82f6",
+        });
+      } catch (error) {
+        console.error("Failed to parse saved settings:", error);
+      }
     }
   }, []);
 
+  const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
   const saveSettings = () => {
-    const settings = {
-      serverUrl,
-      autoScroll,
-      showTimestamps,
-      maxMessages,
-      accentColor,
+    try {
+      localStorage.setItem("aiAgentSettings", JSON.stringify(settings));
+      
+      // Apply accent color to CSS custom properties
+      document.documentElement.style.setProperty("--accent-color", settings.accentColor);
+      
+      // Apply other settings to document for global access
+      document.documentElement.setAttribute("data-auto-scroll", settings.autoScroll.toString());
+      document.documentElement.setAttribute("data-show-timestamps", settings.showTimestamps.toString());
+      document.documentElement.setAttribute("data-max-messages", settings.maxMessages);
+      
+      toast({
+        title: "Settings Saved",
+        description: "Your configuration has been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetSettings = () => {
+    const defaultSettings: Settings = {
+      serverUrl: "http://localhost:8000",
+      autoScroll: true,
+      showTimestamps: true,
+      maxMessages: "100",
+      accentColor: "#3b82f6",
     };
-    localStorage.setItem("aiAgentSettings", JSON.stringify(settings));
     
-    // Apply accent color
-    document.documentElement.style.setProperty("--accent-color", accentColor);
+    setSettings(defaultSettings);
+    localStorage.removeItem("aiAgentSettings");
+    document.documentElement.style.removeProperty("--accent-color");
     
     toast({
-      title: "Settings Saved",
-      description: "Your configuration has been saved successfully.",
+      title: "Settings Reset",
+      description: "All settings have been reset to defaults.",
     });
   };
 
@@ -99,8 +146,8 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
             <div className="flex gap-2">
               <Input
                 id="server-url"
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
+                value={settings.serverUrl}
+                onChange={(e) => updateSetting('serverUrl', e.target.value)}
                 placeholder="http://localhost:8000"
                 className="flex-1"
               />
@@ -136,17 +183,20 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
                 <Input
                   id="accent-color"
                   type="color"
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  className="w-16 h-10 p-1 rounded"
+                  value={settings.accentColor}
+                  onChange={(e) => updateSetting('accentColor', e.target.value)}
+                  className="w-16 h-10 p-1 rounded cursor-pointer"
                 />
                 <Input
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
+                  value={settings.accentColor}
+                  onChange={(e) => updateSetting('accentColor', e.target.value)}
                   placeholder="#3b82f6"
                   className="flex-1"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Choose your preferred accent color for the interface
+              </p>
             </div>
           </div>
 
@@ -165,8 +215,8 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               </div>
               <Switch
                 id="auto-scroll"
-                checked={autoScroll}
-                onCheckedChange={setAutoScroll}
+                checked={settings.autoScroll}
+                onCheckedChange={(checked) => updateSetting('autoScroll', checked)}
               />
             </div>
 
@@ -181,8 +231,8 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               </div>
               <Switch
                 id="show-timestamps"
-                checked={showTimestamps}
-                onCheckedChange={setShowTimestamps}
+                checked={settings.showTimestamps}
+                onCheckedChange={(checked) => updateSetting('showTimestamps', checked)}
               />
             </div>
 
@@ -193,8 +243,8 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               <Input
                 id="max-messages"
                 type="number"
-                value={maxMessages}
-                onChange={(e) => setMaxMessages(e.target.value)}
+                value={settings.maxMessages}
+                onChange={(e) => updateSetting('maxMessages', e.target.value)}
                 min="10"
                 max="1000"
                 className="w-full"
@@ -227,10 +277,15 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
             </p>
           </div>
 
-          {/* Save Button */}
-          <Button onClick={saveSettings} className="w-full">
-            Save Configuration
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button onClick={saveSettings} className="flex-1">
+              Save Configuration
+            </Button>
+            <Button onClick={resetSettings} variant="outline" className="flex-1">
+              Reset to Defaults
+            </Button>
+          </div>
         </div>
       </ScrollArea>
     </Card>

@@ -30,6 +30,13 @@ export const ToolResults = () => {
       content: 'Web search results from DuckDuckGo would be displayed here in a structured format.',
       timestamp: new Date(),
     },
+    {
+      id: '3',
+      tool: 'Calendar',
+      title: 'Calendar Event Created',
+      content: 'Successfully created a new calendar event for your meeting tomorrow at 2 PM.',
+      timestamp: new Date(),
+    },
   ]);
   
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
@@ -74,11 +81,30 @@ export const ToolResults = () => {
     }
   };
 
+  const clearResults = () => {
+    setResults([]);
+    setExpandedResults(new Set());
+  };
+
   return (
     <Card className="h-full flex flex-col bg-card/50 backdrop-blur-sm border-border">
       <div className="p-4 border-b border-border flex-shrink-0">
-        <h3 className="text-lg font-semibold text-card-foreground">Tool Results</h3>
-        <p className="text-sm text-muted-foreground">Recent tool executions and results</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-card-foreground">Tool Results</h3>
+            <p className="text-sm text-muted-foreground">Recent tool executions and results</p>
+          </div>
+          {results.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearResults}
+              className="text-xs"
+            >
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
       
       <ScrollArea className="flex-1 min-h-0">
@@ -91,7 +117,7 @@ export const ToolResults = () => {
             </div>
           ) : (
             results.map((result) => (
-              <div key={result.id} className="border border-border rounded-lg p-3 bg-card/80">
+              <div key={result.id} className="border border-border rounded-lg p-3 bg-card/80 hover:bg-card/90 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Badge 
@@ -106,7 +132,7 @@ export const ToolResults = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleExpanded(result.id)}
-                    className="p-1 h-auto"
+                    className="p-1 h-auto hover:bg-muted/50"
                   >
                     {expandedResults.has(result.id) ? (
                       <ChevronUp className="w-4 h-4" />
