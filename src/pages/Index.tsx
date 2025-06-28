@@ -49,7 +49,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       {/* Header */}
-      <div className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -57,7 +57,7 @@ const Index = () => {
                 <Bot className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">AI Agent Dashboard</h1>
+                <h1 className="text-xl font-bold text-foreground">AI Agent Dashboard</h1>
                 <p className="text-sm text-muted-foreground">Local LLM-powered assistant</p>
               </div>
             </div>
@@ -71,7 +71,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleNewChat}
-                  className="gap-2"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
                 >
                   <Plus className="w-4 h-4" />
                   New Chat
@@ -80,7 +80,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowHistory(!showHistory)}
-                  className="gap-2"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
                 >
                   <History className="w-4 h-4" />
                   History
@@ -89,7 +89,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowConfig(!showConfig)}
-                  className="gap-2"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
                 >
                   <Settings className="w-4 h-4" />
                   Settings

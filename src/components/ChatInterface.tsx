@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +23,8 @@ export const ChatInterface = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Load chat history on mount or when chatId changes
@@ -34,12 +32,15 @@ export const ChatInterface = ({
     loadChatHistory();
   }, [chatId]);
 
-  // Auto-scroll when messages change
+  // Auto-scroll when messages change - scroll within the chat area only
   useEffect(() => {
-    if (autoScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current && scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
     }
-  }, [messages, autoScroll]);
+  }, [messages]);
 
   const loadChatHistory = async () => {
     try {
@@ -207,17 +208,17 @@ export const ChatInterface = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Card className="flex-1 flex flex-col bg-background/50 backdrop-blur-sm min-h-0">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Chat with AI Agent</h2>
+    <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
+      <Card className="flex-1 flex flex-col bg-card/50 backdrop-blur-sm min-h-0 border-border">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-card/80">
+          <h2 className="text-lg font-semibold text-card-foreground">Chat with AI Agent</h2>
           <div className="flex items-center gap-2">
             <GripVertical className="w-4 h-4 text-muted-foreground cursor-move" />
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+          <div className="p-4 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -233,7 +234,7 @@ export const ChatInterface = ({
                   className={`max-w-[80%] p-3 rounded-lg transition-colors ${
                     message.role === "user"
                       ? "bg-primary text-primary-foreground ml-12"
-                      : "bg-muted mr-12"
+                      : "bg-muted text-muted-foreground mr-12"
                   }`}
                 >
                   <div className="flex items-start gap-2">
@@ -259,7 +260,7 @@ export const ChatInterface = ({
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-muted p-3 rounded-lg mr-12">
+                <div className="bg-muted text-muted-foreground p-3 rounded-lg mr-12">
                   <div className="flex items-center gap-2">
                     <Bot className="w-5 h-5" />
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -274,20 +275,21 @@ export const ChatInterface = ({
       </Card>
 
       {/* Sticky Input Section */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t p-4">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border p-4">
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask me to schedule a meeting, search Wikipedia, or anything else..."
-            className="flex-1"
+            className="flex-1 bg-background border-border text-foreground placeholder:text-muted-foreground"
             disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
             size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
