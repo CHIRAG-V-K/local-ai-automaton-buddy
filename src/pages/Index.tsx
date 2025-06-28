@@ -72,9 +72,9 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-background to-muted/20 overflow-hidden">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-background/80 backdrop-blur-sm flex-shrink-0 z-50">
+      <div className="border-b border-border bg-card flex-shrink-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -96,7 +96,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleNewChat}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-muted"
                 >
                   <Plus className="w-4 h-4" />
                   New Chat
@@ -105,7 +105,7 @@ const Index = () => {
                   variant={activeSidebarPanel === 'history' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleSidebarToggle('history')}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-accent data-[state=on]:bg-accent"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-muted data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 >
                   <History className="w-4 h-4" />
                   History
@@ -114,7 +114,7 @@ const Index = () => {
                   variant={activeSidebarPanel === 'tools' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleSidebarToggle('tools')}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-muted data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 >
                   <Wrench className="w-4 h-4" />
                   Tools
@@ -123,19 +123,21 @@ const Index = () => {
                   variant={activeSidebarPanel === 'config' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleSidebarToggle('config')}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-accent"
+                  className="gap-2 border-border bg-background text-foreground hover:bg-muted data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 >
                   <Settings className="w-4 h-4" />
                   Settings
                 </Button>
               </div>
 
-              {/* Mobile Controls */}
-              <MobileMenuDrawer
-                onSelectChat={handleSelectChat}
-                onNewChat={handleNewChat}
-                currentChatId={currentChatId}
-              />
+              {/* Mobile/Tablet Controls */}
+              <div className="lg:hidden">
+                <MobileMenuDrawer
+                  onSelectChat={handleSelectChat}
+                  onNewChat={handleNewChat}
+                  currentChatId={currentChatId}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -1,9 +1,10 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, User, Bot, GripVertical } from "lucide-react";
+import { Send, Loader2, User, Bot, Paperclip, X, Image, Video, File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { chatStorage, ChatMessage, ChatHistory } from "@/utils/chatStorage";
 
@@ -12,6 +13,13 @@ interface ChatInterfaceProps {
   onToolUsed: (tool: string) => void;
   chatId: string;
   onChatUpdate: (chat: ChatHistory) => void;
+}
+
+interface UploadedFile {
+  id: string;
+  file: File;
+  preview: string;
+  type: 'image' | 'video' | 'file';
 }
 
 export const ChatInterface = ({
@@ -23,24 +31,65 @@ export const ChatInterface = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [settings, setSettings] = useState({
+    autoScroll: true,
+    showTimestamps: true,
+    maxMessages: "100",
+  });
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Listen for settings changes
+  useEffect(() => {
+    const handleSettingsChange = (event: CustomEvent) => {
+      const newSettings = event.detail;
+      setSettings({
+        autoScroll: newSettings.autoScroll,
+        showTimestamps: newSettings.showTimestamps,
+        maxMessages: newSettings.maxMessages,
+      });
+    };
+
+    window.addEventListener('settingsChanged', handleSettingsChange as EventListener);
+    
+    // Load initial settings
+    const savedSettings = localStorage.getItem("aiAgentSettings");
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings({
+          autoScroll: parsed.autoScroll ?? true,
+          showTimestamps: parsed.showTimestamps ?? true,
+          maxMessages: parsed.maxMessages || "100",
+        });
+      } catch (error) {
+        console.error("Failed to parse saved settings:", error);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('settingsChanged', handleSettingsChange as EventListener);
+    };
+  }, []);
 
   // Load chat history on mount or when chatId changes
   useEffect(() => {
     loadChatHistory();
   }, [chatId]);
 
-  // Auto-scroll when messages change - scroll within the chat area only
+  // Auto-scroll when messages change (only if auto-scroll is enabled)
   useEffect(() => {
-    if (messagesEndRef.current && scrollAreaRef.current) {
+    if (settings.autoScroll && messagesEndRef.current && scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [messages]);
+  }, [messages, settings.autoScroll]);
 
   const loadChatHistory = async () => {
     try {
@@ -48,11 +97,10 @@ export const ChatInterface = ({
       if (chat) {
         setMessages(chat.messages);
       } else {
-        // Create new chat with welcome message
         const welcomeMessage: ChatMessage = {
           id: "1",
           role: "assistant",
-          content: "Hello! I'm your AI agent. I can help you with scheduling meetings, searching Wikipedia, web searches, and more. What would you like me to do?",
+          content: "Hello! I'm your AI agent. I can help you with various tasks. What would you like me to do?",
           timestamp: new Date(),
         };
         setMessages([welcomeMessage]);
@@ -65,12 +113,15 @@ export const ChatInterface = ({
 
   const saveChatHistory = async (updatedMessages: ChatMessage[]) => {
     try {
+      const maxMessages = parseInt(settings.maxMessages) || 100;
+      const trimmedMessages = updatedMessages.slice(-maxMessages);
+      
       const chat: ChatHistory = {
         id: chatId,
-        name: updatedMessages.length > 1 
-          ? updatedMessages[1].content.slice(0, 50) + "..." 
+        name: trimmedMessages.length > 1 
+          ? trimmedMessages[1].content.slice(0, 50) + "..." 
           : "New Chat",
-        messages: updatedMessages,
+        messages: trimmedMessages,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -82,8 +133,56 @@ export const ChatInterface = ({
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    
+    files.forEach(file => {
+      const fileId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      let fileType: 'image' | 'video' | 'file' = 'file';
+      
+      if (file.type.startsWith('image/')) {
+        fileType = 'image';
+      } else if (file.type.startsWith('video/')) {
+        fileType = 'video';
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const uploadedFile: UploadedFile = {
+          id: fileId,
+          file,
+          preview: e.target?.result as string,
+          type: fileType,
+        };
+        
+        setUploadedFiles(prev => [...prev, uploadedFile]);
+      };
+      
+      if (fileType === 'image' || fileType === 'video') {
+        reader.readAsDataURL(file);
+      } else {
+        const uploadedFile: UploadedFile = {
+          id: fileId,
+          file,
+          preview: '',
+          type: 'file',
+        };
+        setUploadedFiles(prev => [...prev, uploadedFile]);
+      }
+    });
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && uploadedFiles.length === 0) || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -95,6 +194,7 @@ export const ChatInterface = ({
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
+    setUploadedFiles([]); // Clear uploaded files after sending
     setIsLoading(true);
     onStatusChange("thinking");
 
@@ -108,6 +208,7 @@ export const ChatInterface = ({
           message: input,
           conversation_id: chatId,
           stream: true,
+          files: uploadedFiles.map(f => ({ name: f.file.name, type: f.file.type })),
         }),
       });
 
@@ -207,14 +308,17 @@ export const ChatInterface = ({
     }
   };
 
+  const getFileIcon = (type: string) => {
+    if (type === 'image') return <Image className="w-4 h-4" />;
+    if (type === 'video') return <Video className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
+  };
+
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
-      <Card className="flex-1 flex flex-col bg-card/50 backdrop-blur-sm min-h-0 border-border">
-        <div className="p-4 border-b border-border flex items-center justify-between bg-card/80">
+      <Card className="flex-1 flex flex-col bg-card border-border min-h-0">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-card">
           <h2 className="text-lg font-semibold text-card-foreground">Chat with AI Agent</h2>
-          <div className="flex items-center gap-2">
-            <GripVertical className="w-4 h-4 text-muted-foreground cursor-move" />
-          </div>
         </div>
 
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
@@ -225,10 +329,6 @@ export const ChatInterface = ({
                 className={`flex gap-3 ${
                   message.role === "user" ? "justify-end" : "justify-start"
                 }`}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", message.content);
-                }}
               >
                 <div
                   className={`max-w-[80%] p-3 rounded-lg transition-colors ${
@@ -250,9 +350,11 @@ export const ChatInterface = ({
                           Used tool: {message.toolUsed}
                         </p>
                       )}
-                      <p className="text-xs opacity-75 mt-1">
-                        {message.timestamp.toLocaleTimeString()}
-                      </p>
+                      {settings.showTimestamps && (
+                        <p className="text-xs opacity-75 mt-1">
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -274,20 +376,73 @@ export const ChatInterface = ({
         </ScrollArea>
       </Card>
 
-      {/* Sticky Input Section */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border p-4">
+      {/* File Upload Preview */}
+      {uploadedFiles.length > 0 && (
+        <div className="p-4 border-b border-border bg-card">
+          <div className="flex flex-wrap gap-2">
+            {uploadedFiles.map((file) => (
+              <div key={file.id} className="relative flex items-center gap-2 p-2 bg-muted rounded-lg">
+                {file.type === 'image' && file.preview && (
+                  <img 
+                    src={file.preview} 
+                    alt={file.file.name}
+                    className="w-8 h-8 object-cover rounded"
+                  />
+                )}
+                {file.type === 'video' && file.preview && (
+                  <video 
+                    src={file.preview}
+                    className="w-8 h-8 object-cover rounded"
+                  />
+                )}
+                {file.type === 'file' && getFileIcon(file.type)}
+                <span className="text-xs text-muted-foreground truncate max-w-20">
+                  {file.file.name}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFile(file.id)}
+                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Input Section */}
+      <div className="p-4 bg-card border-t border-border">
         <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="border-border hover:bg-muted"
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me to schedule a meeting, search Wikipedia, or anything else..."
+            placeholder="Ask me anything or upload files..."
             className="flex-1 bg-background border-border text-foreground placeholder:text-muted-foreground"
             disabled={isLoading}
           />
           <Button
             onClick={handleSend}
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
             size="sm"
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >

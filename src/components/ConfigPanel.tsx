@@ -35,8 +35,8 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
   const { toast } = useToast();
   const { isConnected, isConnecting, testConnection } = useAutoConnect(settings.serverUrl);
 
+  // Load settings on mount
   useEffect(() => {
-    // Load saved settings
     const savedSettings = localStorage.getItem("aiAgentSettings");
     if (savedSettings) {
       try {
@@ -54,34 +54,54 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
     }
   }, []);
 
-  const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  const saveSettings = () => {
+  // Apply settings immediately when they change
+  useEffect(() => {
     try {
       localStorage.setItem("aiAgentSettings", JSON.stringify(settings));
       
       // Apply accent color to CSS custom properties
-      document.documentElement.style.setProperty("--accent-color", settings.accentColor);
+      const root = document.documentElement;
+      root.style.setProperty("--primary", `${hexToHsl(settings.accentColor)}`);
       
-      // Apply other settings to document for global access
-      document.documentElement.setAttribute("data-auto-scroll", settings.autoScroll.toString());
-      document.documentElement.setAttribute("data-show-timestamps", settings.showTimestamps.toString());
-      document.documentElement.setAttribute("data-max-messages", settings.maxMessages);
+      // Apply other settings for global access
+      root.setAttribute("data-auto-scroll", settings.autoScroll.toString());
+      root.setAttribute("data-show-timestamps", settings.showTimestamps.toString());
+      root.setAttribute("data-max-messages", settings.maxMessages);
       
-      toast({
-        title: "Settings Saved",
-        description: "Your configuration has been saved successfully.",
-      });
+      // Dispatch custom event for chat component to listen to
+      window.dispatchEvent(new CustomEvent('settingsChanged', { 
+        detail: settings 
+      }));
     } catch (error) {
-      console.error("Failed to save settings:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Failed to apply settings:", error);
     }
+  }, [settings]);
+
+  const hexToHsl = (hex: string) => {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  };
+
+  const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   const resetSettings = () => {
@@ -95,7 +115,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
     
     setSettings(defaultSettings);
     localStorage.removeItem("aiAgentSettings");
-    document.documentElement.style.removeProperty("--accent-color");
+    document.documentElement.style.removeProperty("--primary");
     
     toast({
       title: "Settings Reset",
@@ -104,20 +124,20 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col bg-card/95 backdrop-blur-sm border-border">
-      <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
+    <Card className="h-full flex flex-col bg-card border-border">
+      <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0 bg-card">
         <h3 className="text-lg font-semibold text-card-foreground">Configuration</h3>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+        <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-muted">
           <X className="w-4 h-4" />
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea className="flex-1">
         <div className="p-4 space-y-6">
           {/* Server Configuration */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="server-url" className="text-sm font-medium">
+              <Label htmlFor="server-url" className="text-sm font-medium text-foreground">
                 Python Agent Server
               </Label>
               <Badge
@@ -149,13 +169,14 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
                 value={settings.serverUrl}
                 onChange={(e) => updateSetting('serverUrl', e.target.value)}
                 placeholder="http://localhost:8000"
-                className="flex-1"
+                className="flex-1 bg-background border-border text-foreground"
               />
               <Button 
                 onClick={() => testConnection()} 
                 size="sm" 
                 variant="outline"
                 disabled={isConnecting}
+                className="border-border hover:bg-muted"
               >
                 <Server className="w-4 h-4 mr-1" />
                 Test
@@ -170,13 +191,13 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
 
           {/* Appearance Settings */}
           <div className="space-y-4">
-            <h4 className="text-sm font-medium flex items-center gap-2">
+            <h4 className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Palette className="w-4 h-4" />
               Appearance
             </h4>
 
             <div className="space-y-2">
-              <Label htmlFor="accent-color" className="text-sm">
+              <Label htmlFor="accent-color" className="text-sm text-foreground">
                 Accent Color
               </Label>
               <div className="flex gap-2">
@@ -185,13 +206,13 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
                   type="color"
                   value={settings.accentColor}
                   onChange={(e) => updateSetting('accentColor', e.target.value)}
-                  className="w-16 h-10 p-1 rounded cursor-pointer"
+                  className="w-16 h-10 p-1 rounded cursor-pointer border-border"
                 />
                 <Input
                   value={settings.accentColor}
                   onChange={(e) => updateSetting('accentColor', e.target.value)}
                   placeholder="#3b82f6"
-                  className="flex-1"
+                  className="flex-1 bg-background border-border text-foreground"
                 />
               </div>
               <p className="text-xs text-muted-foreground">
@@ -202,11 +223,11 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
 
           {/* Chat Settings */}
           <div className="space-y-4">
-            <h4 className="text-sm font-medium">Chat Settings</h4>
+            <h4 className="text-sm font-medium text-foreground">Chat Settings</h4>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
               <div>
-                <Label htmlFor="auto-scroll" className="text-sm">
+                <Label htmlFor="auto-scroll" className="text-sm text-foreground">
                   Auto-scroll
                 </Label>
                 <p className="text-xs text-muted-foreground">
@@ -220,9 +241,9 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
               <div>
-                <Label htmlFor="show-timestamps" className="text-sm">
+                <Label htmlFor="show-timestamps" className="text-sm text-foreground">
                   Show timestamps
                 </Label>
                 <p className="text-xs text-muted-foreground">
@@ -237,7 +258,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="max-messages" className="text-sm">
+              <Label htmlFor="max-messages" className="text-sm text-foreground">
                 Max messages to keep
               </Label>
               <Input
@@ -247,7 +268,7 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
                 onChange={(e) => updateSetting('maxMessages', e.target.value)}
                 min="10"
                 max="1000"
-                className="w-full"
+                className="w-full bg-background border-border text-foreground"
               />
               <p className="text-xs text-muted-foreground">
                 Maximum number of messages to keep in chat history
@@ -255,34 +276,13 @@ export const ConfigPanel = ({ onClose }: ConfigPanelProps) => {
             </div>
           </div>
 
-          {/* Available Tools */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Available Tools</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <Badge variant="outline" className="justify-center py-2">
-                📅 Calendar
-              </Badge>
-              <Badge variant="outline" className="justify-center py-2">
-                🔍 Wikipedia
-              </Badge>
-              <Badge variant="outline" className="justify-center py-2">
-                🦆 DuckDuckGo
-              </Badge>
-              <Badge variant="outline" className="justify-center py-2">
-                🌐 Web Search
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              These tools will be available when your Python agent is connected
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button onClick={saveSettings} className="flex-1">
-              Save Configuration
-            </Button>
-            <Button onClick={resetSettings} variant="outline" className="flex-1">
+          {/* Reset Button */}
+          <div className="pt-4 border-t border-border">
+            <Button 
+              onClick={resetSettings} 
+              variant="outline" 
+              className="w-full border-border hover:bg-muted text-foreground"
+            >
               Reset to Defaults
             </Button>
           </div>
