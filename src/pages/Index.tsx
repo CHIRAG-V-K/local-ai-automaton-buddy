@@ -47,9 +47,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-background to-muted/20 overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-border bg-background/80 backdrop-blur-sm flex-shrink-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -108,10 +108,10 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-120px)]">
+      <div className="flex-1 flex overflow-hidden">
+        <div className="container mx-auto px-4 py-6 flex gap-6 h-full overflow-hidden">
           {/* Chat Interface - Main Column */}
-          <div className="lg:col-span-3 flex flex-col space-y-6">
+          <div className="flex-1 flex flex-col space-y-6 min-w-0 overflow-hidden">
             <StatusBar 
               status={agentStatus} 
               lastToolUsed={lastToolUsed}
@@ -127,19 +127,25 @@ const Index = () => {
           </div>
 
           {/* Desktop Sidebar */}
-          <div className="hidden lg:block space-y-6">
+          <div className="hidden lg:flex flex-col gap-6 w-80 overflow-hidden">
             {showHistory && (
-              <ChatHistoryPanel
-                onClose={() => setShowHistory(false)}
-                onSelectChat={handleSelectChat}
-                onNewChat={handleNewChat}
-                currentChatId={currentChatId}
-              />
+              <div className="flex-1 min-h-0">
+                <ChatHistoryPanel
+                  onClose={() => setShowHistory(false)}
+                  onSelectChat={handleSelectChat}
+                  onNewChat={handleNewChat}
+                  currentChatId={currentChatId}
+                />
+              </div>
             )}
             {showConfig && (
-              <ConfigPanel onClose={() => setShowConfig(false)} />
+              <div className="flex-1 min-h-0">
+                <ConfigPanel onClose={() => setShowConfig(false)} />
+              </div>
             )}
-            <ToolResults />
+            <div className="flex-1 min-h-0">
+              <ToolResults />
+            </div>
           </div>
         </div>
       </div>

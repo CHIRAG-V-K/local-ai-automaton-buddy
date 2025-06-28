@@ -62,36 +62,36 @@ export const ToolResults = () => {
   const getToolColor = (tool: string) => {
     switch (tool.toLowerCase()) {
       case 'wikipedia':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'duckduckgo':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
       case 'calendar':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'web':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
   return (
-    <Card className="h-[600px] bg-white/50 backdrop-blur-sm">
-      <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-900">Tool Results</h3>
-        <p className="text-sm text-gray-600">Recent tool executions and results</p>
+    <Card className="h-full flex flex-col bg-card/50 backdrop-blur-sm border-border">
+      <div className="p-4 border-b border-border flex-shrink-0">
+        <h3 className="text-lg font-semibold text-card-foreground">Tool Results</h3>
+        <p className="text-sm text-muted-foreground">Recent tool executions and results</p>
       </div>
       
-      <ScrollArea className="h-[calc(600px-80px)] p-4">
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-4 space-y-4">
           {results.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No tool results yet</p>
               <p className="text-xs">Results will appear here when you use tools</p>
             </div>
           ) : (
             results.map((result) => (
-              <div key={result.id} className="border rounded-lg p-3 bg-white/50">
+              <div key={result.id} className="border border-border rounded-lg p-3 bg-card/80">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Badge 
@@ -116,18 +116,18 @@ export const ToolResults = () => {
                   </Button>
                 </div>
                 
-                <h4 className="font-medium text-sm text-gray-900 mb-1">
+                <h4 className="font-medium text-sm text-card-foreground mb-1">
                   {result.title}
                 </h4>
                 
-                <div className={`text-xs text-gray-600 ${
+                <div className={`text-xs text-muted-foreground ${
                   expandedResults.has(result.id) ? '' : 'line-clamp-2'
                 }`}>
                   {result.content}
                 </div>
                 
-                <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                  <span className="text-xs text-gray-500">
+                <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground">
                     {result.timestamp.toLocaleTimeString()}
                   </span>
                 </div>
