@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ChatInterface } from '@/components/ChatInterface';
 import { ToolResults } from '@/components/ToolResults';
@@ -11,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Settings, Bot, History, Plus, Wrench } from 'lucide-react';
 import { chatStorage, ChatHistory } from '@/utils/chatStorage';
 import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type SidebarPanel = 'history' | 'config' | 'tools' | null;
 
@@ -72,20 +72,28 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card flex-shrink-0 z-50">
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="border-b border-border/50 glass-strong flex-shrink-0 z-50 shadow-lg"
+      >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
+            <motion.div 
+              className="flex items-center gap-3"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-xl shadow-lg">
                 <Bot className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">AI Agent Dashboard</h1>
                 <p className="text-sm text-muted-foreground">Local LLM-powered assistant</p>
               </div>
-            </div>
+            </motion.div>
             
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -96,7 +104,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleNewChat}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-muted"
+                  className="btn-glass gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   New Chat
@@ -105,7 +113,7 @@ const Index = () => {
                   variant={activeSidebarPanel === 'history' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleSidebarToggle('history')}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-muted data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  className="btn-glass gap-2"
                 >
                   <History className="w-4 h-4" />
                   History
@@ -114,7 +122,7 @@ const Index = () => {
                   variant={activeSidebarPanel === 'tools' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleSidebarToggle('tools')}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-muted data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  className="btn-glass gap-2"
                 >
                   <Wrench className="w-4 h-4" />
                   Tools
@@ -123,7 +131,7 @@ const Index = () => {
                   variant={activeSidebarPanel === 'config' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleSidebarToggle('config')}
-                  className="gap-2 border-border bg-background text-foreground hover:bg-muted data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  className="btn-glass gap-2"
                 >
                   <Settings className="w-4 h-4" />
                   Settings
@@ -141,13 +149,18 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         <div className="container mx-auto px-4 py-6 flex gap-6 h-full overflow-hidden">
           {/* Chat Interface - Main Column */}
-          <div className="flex-1 flex flex-col space-y-6 min-w-0 overflow-hidden">
+          <motion.div 
+            className="flex-1 flex flex-col space-y-6 min-w-0 overflow-hidden"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <StatusBar 
               status={agentStatus} 
               lastToolUsed={lastToolUsed}
@@ -160,14 +173,16 @@ const Index = () => {
                 onChatUpdate={handleChatUpdate}
               />
             )}
-          </div>
+          </motion.div>
 
           {/* Desktop Sidebar */}
-          {activeSidebarPanel && (
-            <div className="hidden lg:flex flex-col w-80 h-full overflow-hidden">
-              {renderSidebarContent()}
-            </div>
-          )}
+          <AnimatePresence>
+            {activeSidebarPanel && (
+              <div className="hidden lg:flex flex-col w-80 h-full overflow-hidden">
+                {renderSidebarContent()}
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
