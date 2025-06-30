@@ -36,11 +36,11 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
   };
 
   return (
-    <Card className="p-4 glass border-0 shadow-lg">
+    <Card className="p-3 glass shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${getStatusColor()} shadow-lg`} />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
             <span className="text-sm font-medium text-foreground">
               {getStatusText()}
             </span>
@@ -50,17 +50,17 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
           )}
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {lastToolUsed && (
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <Badge variant="secondary" className="text-xs glass border-0 shadow-md bg-gradient-to-r from-primary/20 to-accent/20">
+              <Zap className="w-3 h-3 text-primary" />
+              <Badge variant="secondary" className="text-xs glass bg-primary/10">
                 {lastToolUsed}
               </Badge>
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
             {new Date().toLocaleTimeString()}
           </div>
         </div>
