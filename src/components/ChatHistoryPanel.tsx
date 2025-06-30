@@ -77,76 +77,76 @@ export const ChatHistoryPanel = ({
   };
 
   return (
-    <Card className="bg-background/95 backdrop-blur-sm border">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Chat History</h3>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+    <Card className="glass-strong h-full flex flex-col">
+      <div className="p-4 border-b border-border/10 flex items-center justify-between flex-shrink-0">
+        <h3 className="text-lg font-semibold text-foreground">Chat History</h3>
+        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
           <X className="w-4 h-4" />
         </Button>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col min-h-0">
         <Button
           onClick={onNewChat}
-          className="w-full mb-4 gap-2"
+          className="w-full mb-4 gap-2 glass hover:bg-primary/20"
           variant="outline"
         >
           <Plus className="w-4 h-4" />
           New Chat
         </Button>
 
-        <ScrollArea className="h-[400px]">
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Loading chat history...
-            </div>
-          ) : chats.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No chat history yet
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {chats.map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
-                    currentChatId === chat.id ? "bg-muted border-primary" : ""
-                  }`}
-                  onClick={() => onSelectChat(chat.id)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium truncate">
+        <ScrollArea className="flex-1 -mx-2">
+          <div className="px-2">
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Loading chat history...
+              </div>
+            ) : chats.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No chat history yet
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {chats.map((chat) => (
+                  <div
+                    key={chat.id}
+                    className={`w-full p-3 rounded-lg glass cursor-pointer hover:bg-accent/20 transition-all duration-200 ${
+                      currentChatId === chat.id ? "bg-primary/20 border border-primary/30" : ""
+                    }`}
+                    onClick={() => onSelectChat(chat.id)}
+                  >
+                    <div className="flex items-start gap-3 w-full">
+                      <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate mb-1">
                           {chat.name}
-                        </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge variant="secondary" className="text-xs glass bg-accent/10">
+                            {chat.messages.length}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                            {formatDate(chat.updatedAt)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-xs">
-                          {chat.messages.length} messages
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(chat.updatedAt)}
-                        </span>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteChat(chat.id);
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive flex-shrink-0"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteChat(chat.id);
-                      }}
-                      className="ml-2 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </ScrollArea>
       </div>
     </Card>
