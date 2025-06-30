@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,14 +64,21 @@ export const ChatHistoryPanel = ({
 
   const formatDate = (date: Date) => {
     const now = new Date();
-    const diffInHours = (now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60);
-    
+    const diffInHours =
+      (now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60);
+
     if (diffInHours < 24) {
-      return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return new Date(date).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } else if (diffInHours < 168) {
-      return new Date(date).toLocaleDateString([], { weekday: 'short' });
+      return new Date(date).toLocaleDateString([], { weekday: "short" });
     } else {
-      return new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return new Date(date).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      });
     }
   };
 
@@ -80,7 +86,12 @@ export const ChatHistoryPanel = ({
     <Card className="glass-strong h-full flex flex-col">
       <div className="p-4 border-b border-border/10 flex items-center justify-between flex-shrink-0">
         <h3 className="text-lg font-semibold text-foreground">Chat History</h3>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="h-8 w-8 p-0"
+        >
           <X className="w-4 h-4" />
         </Button>
       </div>
@@ -111,7 +122,9 @@ export const ChatHistoryPanel = ({
                   <div
                     key={chat.id}
                     className={`w-full p-3 rounded-lg glass cursor-pointer hover:bg-accent/20 transition-all duration-200 ${
-                      currentChatId === chat.id ? "bg-primary/20 border border-primary/30" : ""
+                      currentChatId === chat.id
+                        ? "bg-primary/20 border border-primary/30"
+                        : ""
                     }`}
                     onClick={() => onSelectChat(chat.id)}
                   >
@@ -119,10 +132,15 @@ export const ChatHistoryPanel = ({
                       <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-foreground truncate mb-1">
-                          {chat.name}
+                          {chat.name.length > 25
+                            ? chat.name.slice(0, 25) + "..."
+                            : chat.name}
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <Badge variant="secondary" className="text-xs glass bg-accent/10">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs glass bg-accent/10"
+                          >
                             {chat.messages.length}
                           </Badge>
                           <span className="text-xs text-muted-foreground flex-shrink-0">
