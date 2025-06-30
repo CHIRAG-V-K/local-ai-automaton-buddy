@@ -1,5 +1,4 @@
-
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -158,7 +157,6 @@ export const ChatInterface = ({
       role: "user",
       content: input,
       timestamp: new Date(),
-      files: uploadedFiles.map(f => ({ name: f.file.name, type: f.file.type, preview: f.preview })),
     };
 
     dispatch(addMessage(userMessage));
