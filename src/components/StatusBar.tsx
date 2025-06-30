@@ -36,13 +36,13 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
   };
 
   return (
-    <Card className="p-4 bg-white/50 backdrop-blur-sm">
+    <Card className="p-4 glass border-0 shadow-lg">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${getStatusColor()}`} />
-            <span className="text-sm font-medium text-gray-900">
-              Agent Status: {getStatusText()}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${getStatusColor()} shadow-lg`} />
+            <span className="text-sm font-medium text-foreground">
+              {getStatusText()}
             </span>
           </div>
           {status === 'thinking' && (
@@ -53,13 +53,13 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
         <div className="flex items-center gap-4">
           {lastToolUsed && (
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-blue-500" />
-              <Badge variant="secondary" className="text-xs">
-                Last used: {lastToolUsed}
+              <Zap className="w-4 h-4 text-primary" />
+              <Badge variant="secondary" className="text-xs glass border-0 shadow-md bg-gradient-to-r from-primary/20 to-accent/20">
+                {lastToolUsed}
               </Badge>
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             {new Date().toLocaleTimeString()}
           </div>

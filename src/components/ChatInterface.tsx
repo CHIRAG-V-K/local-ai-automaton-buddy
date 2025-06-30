@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,53 +280,60 @@ export const ChatInterface = ({
   return (
     <motion.div 
       className="flex flex-col h-full max-h-[calc(100vh-200px)]"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="flex-1 flex flex-col glass-strong border-border/50 shadow-xl min-h-0">
-        <div className="p-4 border-b border-border/50 flex items-center justify-between bg-card/50 glass">
-          <h2 className="text-lg font-semibold text-card-foreground">Chat with AI Agent</h2>
+      <Card className="flex-1 flex flex-col glass-strong shadow-2xl min-h-0 border-0">
+        <div className="p-6 border-b border-border/30 bg-gradient-to-r from-primary/10 to-accent/10 glass">
+          <h2 className="text-xl font-semibold text-card-foreground">AI Assistant</h2>
+          <p className="text-sm text-muted-foreground mt-1">Powered by advanced AI</p>
         </div>
 
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-          <div className="p-4 space-y-4">
+          <div className="p-6 space-y-6">
             <AnimatePresence>
               {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className={`flex gap-3 ${
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.02 }}
+                  className={`flex gap-4 ${
                     message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg glass border border-border/50 transition-all duration-200 hover:scale-[1.02] ${
+                    className={`max-w-[80%] p-4 rounded-2xl glass transition-all duration-200 ${
                       message.role === "user"
-                        ? "bg-primary/10 text-primary-foreground ml-12"
-                        : "bg-muted/50 text-muted-foreground mr-12"
+                        ? "bg-gradient-to-br from-primary/20 to-primary/10 text-foreground ml-12 shadow-lg"
+                        : "bg-gradient-to-br from-card/80 to-muted/20 text-foreground mr-12 shadow-lg"
                     }`}
                   >
-                    <div className="flex items-start gap-2">
-                      {message.role === "user" ? (
-                        <User className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <Bot className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                      )}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.role === "user" 
+                          ? "bg-primary/20 text-primary" 
+                          : "bg-accent/20 text-accent-foreground"
+                      }`}>
+                        {message.role === "user" ? (
+                          <User className="w-4 h-4" />
+                        ) : (
+                          <Bot className="w-4 h-4" />
+                        )}
+                      </div>
                       <div className="flex-1">
                         <div className="text-sm">
                           <MessageContent content={message.content} />
                         </div>
                         {message.toolUsed && (
-                          <p className="text-xs opacity-75 mt-1">
-                            Used tool: {message.toolUsed}
-                          </p>
+                          <div className="mt-2 px-2 py-1 bg-accent/20 rounded-lg text-xs text-accent-foreground">
+                            🔧 Used: {message.toolUsed}
+                          </div>
                         )}
                         {settings.showTimestamps && (
-                          <p className="text-xs opacity-75 mt-1">
+                          <p className="text-xs text-muted-foreground mt-2">
                             {message.timestamp.toLocaleTimeString()}
                           </p>
                         )}
@@ -338,15 +346,19 @@ export const ChatInterface = ({
             
             {isLoading && (
               <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 className="flex justify-start"
               >
-                <div className="glass bg-muted/50 text-muted-foreground p-3 rounded-lg mr-12 border border-border/50">
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-5 h-5" />
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Thinking...</span>
+                <div className="glass bg-gradient-to-br from-card/80 to-muted/20 p-4 rounded-2xl mr-12 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-accent/20 text-accent-foreground flex items-center justify-center">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span className="text-sm text-foreground">Thinking...</span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -363,40 +375,44 @@ export const ChatInterface = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="p-4 border-b border-border/50 glass"
+            className="p-4 glass border-0 shadow-lg rounded-xl my-2"
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {uploadedFiles.map((file, index) => (
                 <motion.div 
                   key={file.id}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="relative flex items-center gap-2 p-2 glass rounded-lg border border-border/50"
+                  transition={{ delay: index * 0.05 }}
+                  className="relative flex items-center gap-3 p-3 glass rounded-xl shadow-md bg-gradient-to-r from-accent/10 to-primary/10"
                 >
                   {file.type === 'image' && file.preview && (
                     <img 
                       src={file.preview} 
                       alt={file.file.name}
-                      className="w-8 h-8 object-cover rounded"
+                      className="w-10 h-10 object-cover rounded-lg"
                     />
                   )}
                   {file.type === 'video' && file.preview && (
                     <video 
                       src={file.preview}
-                      className="w-8 h-8 object-cover rounded"
+                      className="w-10 h-10 object-cover rounded-lg"
                     />
                   )}
-                  {file.type === 'file' && getFileIcon(file.type)}
-                  <span className="text-xs text-muted-foreground truncate max-w-20">
+                  {file.type === 'file' && (
+                    <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                      <File className="w-5 h-5 text-primary" />
+                    </div>
+                  )}
+                  <span className="text-sm text-foreground truncate max-w-32">
                     {file.file.name}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFile(file.id)}
-                    className="h-4 w-4 p-0 hover:bg-destructive/20 hover:text-destructive hover:scale-110 transition-all duration-200"
+                    className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive rounded-full"
                   >
                     <X className="w-3 h-3" />
                   </Button>
@@ -408,8 +424,8 @@ export const ChatInterface = ({
       </AnimatePresence>
 
       {/* Input Section */}
-      <div className="p-4 glass border-t border-border/50">
-        <div className="flex gap-2">
+      <div className="p-4 glass border-0 shadow-xl rounded-xl">
+        <div className="flex gap-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -422,7 +438,7 @@ export const ChatInterface = ({
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            className="btn-glass hover:scale-110 transition-all duration-200"
+            className="btn-glass border-0 shadow-md"
           >
             <Paperclip className="w-4 h-4" />
           </Button>
@@ -431,14 +447,14 @@ export const ChatInterface = ({
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask me anything or upload files..."
-            className="flex-1 glass border-border/50 focus:border-primary/50 transition-all duration-200"
+            className="flex-1 glass border-0 shadow-md focus:shadow-lg transition-all duration-200"
             disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
             size="sm"
-            className="btn-glass hover:scale-110 transition-all duration-200"
+            className="btn-glass border-0 shadow-md bg-gradient-to-r from-primary to-primary/80 text-primary-foreground"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
