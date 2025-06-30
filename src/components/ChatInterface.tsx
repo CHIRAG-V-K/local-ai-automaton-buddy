@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, User, Bot, Paperclip, X, Image, Video, File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { chatStorage, ChatMessage, ChatHistory } from "@/utils/chatStorage";
+import { MessageContent } from "./MessageContent";
 
 interface ChatInterfaceProps {
   onStatusChange: (status: "idle" | "thinking" | "working") => void;
@@ -344,7 +344,9 @@ export const ChatInterface = ({
                       <Bot className="w-5 h-5 mt-0.5 flex-shrink-0" />
                     )}
                     <div className="flex-1">
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <div className="text-sm">
+                        <MessageContent content={message.content} />
+                      </div>
                       {message.toolUsed && (
                         <p className="text-xs opacity-75 mt-1">
                           Used tool: {message.toolUsed}
