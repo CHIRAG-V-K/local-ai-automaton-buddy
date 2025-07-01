@@ -7,7 +7,7 @@ import { ConfigPanel } from '@/components/ConfigPanel';
 import { ChatHistoryPanel } from '@/components/ChatHistoryPanel';
 import { MobileMenuDrawer } from '@/components/MobileMenuDrawer';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Button } from '@/components/ui/ui/button';
+import { Button } from '@/components/ui/button';
 import { Settings, Bot, History, Plus, Wrench, Menu } from 'lucide-react';
 import { chatStorage, ChatHistory } from '@/utils/chatStorage';
 import { useToast } from '@/hooks/use-toast';
