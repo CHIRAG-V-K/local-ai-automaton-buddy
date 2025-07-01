@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,13 +44,11 @@ export const ChatInterface = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Load chat history on mount or when chatId changes
   useEffect(() => {
     loadChatHistory();
     dispatch(setCurrentChatId(chatId));
   }, [chatId]);
 
-  // Auto-scroll when messages change (only if auto-scroll is enabled)
   useEffect(() => {
     if (settings.autoScroll && messagesEndRef.current && scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -91,7 +88,7 @@ export const ChatInterface = ({
         name: trimmedMessages.length > 1 
           ? trimmedMessages[1].content.slice(0, 50) + "..." 
           : "New Chat",
-        messages: trimmedMessages, // Already strings, no conversion needed
+        messages: trimmedMessages,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -168,23 +165,20 @@ export const ChatInterface = ({
     onStatusChange("thinking");
 
     try {
-      // Prepare conversation context (last 10 messages for context)
       const contextMessages = messages.slice(-10);
       
-      // Create FormData for multipart/form-data submission
       const formData = new FormData();
       formData.append('message', currentInput);
       formData.append('context', JSON.stringify(contextMessages));
       formData.append('stream', 'true');
       
-      // Append files to FormData
       uploadedFiles.forEach((uploadedFile, index) => {
         formData.append('files', uploadedFile.file);
       });
 
       const response = await fetch(`${settings.serverUrl}/chat`, {
         method: "POST",
-        body: formData, // Send FormData instead of JSON
+        body: formData,
       });
 
       if (!response.ok || !response.body) {
@@ -277,83 +271,86 @@ export const ChatInterface = ({
 
   return (
     <div className="flex flex-col h-full">
-      <Card className="flex-1 flex flex-col glass-strong shadow-lg min-h-0 mb-2 sm:mb-0">
-        <div className="p-3 sm:p-4 glass">
-          <h2 className="text-base sm:text-lg font-medium text-card-foreground">Chat</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">AI Assistant</p>
-        </div>
+      {/* Chat Messages - Takes remaining space */}
+      <div className="flex-1 min-h-0 mb-2 sm:mb-4">
+        <Card className="h-full flex flex-col glass-strong shadow-lg">
+          <div className="p-3 sm:p-4 glass flex-shrink-0">
+            <h2 className="text-base sm:text-lg font-medium text-card-foreground">Chat</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">AI Assistant</p>
+          </div>
 
-        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 pb-4">
-            {messages.map((message, index) => (
-              <div
-                key={message.id}
-                className={`flex gap-2 sm:gap-3 ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+          <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+            <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 pb-4">
+              {messages.map((message, index) => (
                 <div
-                  className={`max-w-[90%] sm:max-w-[85%] p-2 sm:p-3 rounded-2xl glass transition-all duration-200 ${
-                    message.role === "user"
-                      ? "bg-primary/20 text-foreground ml-4 sm:ml-8"
-                      : "bg-card/60 text-foreground mr-4 sm:mr-8"
+                  key={message.id}
+                  className={`flex gap-2 sm:gap-3 ${
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <div className="flex items-start gap-2">
-                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === "user" 
-                        ? "bg-primary/30 text-primary" 
-                        : "bg-accent/30 text-accent-foreground"
-                    }`}>
-                      {message.role === "user" ? (
-                        <User className="w-2 h-2 sm:w-3 sm:h-3" />
-                      ) : (
-                        <Bot className="w-2 h-2 sm:w-3 sm:h-3" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-xs sm:text-sm">
-                        <MessageContent content={message.content} />
+                  <div
+                    className={`max-w-[90%] sm:max-w-[85%] p-2 sm:p-3 rounded-2xl glass transition-all duration-200 ${
+                      message.role === "user"
+                        ? "bg-primary/20 text-foreground ml-4 sm:ml-8"
+                        : "bg-card/60 text-foreground mr-4 sm:mr-8"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.role === "user" 
+                          ? "bg-primary/30 text-primary" 
+                          : "bg-accent/30 text-accent-foreground"
+                      }`}>
+                        {message.role === "user" ? (
+                          <User className="w-2 h-2 sm:w-3 sm:h-3" />
+                        ) : (
+                          <Bot className="w-2 h-2 sm:w-3 sm:h-3" />
+                        )}
                       </div>
-                      {message.toolUsed && (
-                        <div className="mt-2 px-2 py-1 bg-accent/20 rounded-md text-xs text-accent-foreground">
-                          🔧 {message.toolUsed}
+                      <div className="flex-1">
+                        <div className="text-xs sm:text-sm">
+                          <MessageContent content={message.content} />
                         </div>
-                      )}
-                      {settings.showTimestamps && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(message.timestamp).toLocaleTimeString()}
-                        </p>
-                      )}
+                        {message.toolUsed && (
+                          <div className="mt-2 px-2 py-1 bg-accent/20 rounded-md text-xs text-accent-foreground">
+                            🔧 {message.toolUsed}
+                          </div>
+                        )}
+                        {settings.showTimestamps && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(message.timestamp).toLocaleTimeString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="glass bg-card/60 p-2 sm:p-3 rounded-2xl mr-4 sm:mr-8">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent/30 text-accent-foreground flex items-center justify-center">
-                      <Bot className="w-2 h-2 sm:w-3 sm:h-3" />
-                    </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="glass bg-card/60 p-2 sm:p-3 rounded-2xl mr-4 sm:mr-8">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                      <span className="text-xs sm:text-sm text-foreground">Thinking...</span>
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent/30 text-accent-foreground flex items-center justify-center">
+                        <Bot className="w-2 h-2 sm:w-3 sm:h-3" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                        <span className="text-xs sm:text-sm text-foreground">Thinking...</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-      </Card>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+        </Card>
+      </div>
 
-      {/* File Upload Preview */}
+      {/* File Upload Preview - Fixed positioning above input */}
       {uploadedFiles.length > 0 && (
-        <div className="p-2 sm:p-3 glass rounded-xl mb-2">
+        <div className="p-2 sm:p-3 glass rounded-xl mb-2 flex-shrink-0">
           <div className="flex flex-wrap gap-2">
             {uploadedFiles.map((file) => (
               <div 
@@ -395,45 +392,47 @@ export const ChatInterface = ({
         </div>
       )}
 
-      {/* Input Section - Fixed positioning for mobile */}
-      <div className="p-2 sm:p-3 glass rounded-xl bg-background/95 backdrop-blur-md border border-border/20 sticky bottom-0">
-        <div className="flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="btn-glass flex-shrink-0"
-          >
-            <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me anything..."
-            className="flex-1 glass focus:shadow-md transition-all duration-200 text-sm sm:text-base"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
-            size="sm"
-            className="btn-glass bg-primary/20 text-primary-foreground hover:bg-primary/30 flex-shrink-0"
-          >
-            {isLoading ? (
-              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-            ) : (
-              <Send className="w-3 h-3 sm:w-4 sm:h-4" />
-            )}
-          </Button>
+      {/* Input Section - Fixed at bottom */}
+      <div className="flex-shrink-0">
+        <div className="p-2 sm:p-3 glass rounded-xl bg-background/95 backdrop-blur-md border border-border/20">
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-glass flex-shrink-0"
+            >
+              <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me anything..."
+              className="flex-1 glass focus:shadow-md transition-all duration-200 text-sm sm:text-base"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
+              size="sm"
+              className="btn-glass bg-primary/20 text-primary-foreground hover:bg-primary/30 flex-shrink-0"
+            >
+              {isLoading ? (
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+              ) : (
+                <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

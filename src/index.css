@@ -132,12 +132,12 @@
     @apply bg-gradient-to-br from-background via-background to-primary/5 text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
-    min-height: 100dvh; /* Dynamic viewport height for mobile */
+    min-height: 100dvh;
   }
 
   html, body, #root {
     height: 100%;
-    height: 100dvh; /* Dynamic viewport height for mobile */
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -151,7 +151,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
-  /* Mobile optimizations */
+  /* Mobile optimizations - Critical fixes for mobile layout */
   @media (max-width: 768px) {
     .glass {
       backdrop-filter: blur(8px);
@@ -163,11 +163,13 @@
       -webkit-backdrop-filter: blur(12px);
     }
 
-    /* Ensure mobile viewport is properly handled */
+    /* Ensure mobile viewport is properly handled and prevent overflow */
     html, body, #root {
       height: 100vh;
       height: 100dvh;
       overflow: hidden;
+      position: fixed;
+      width: 100%;
     }
 
     /* Prevent zoom on input focus */
@@ -179,12 +181,47 @@
     button, a, [role="button"] {
       touch-action: manipulation;
     }
+
+    /* Ensure chat interface doesn't overflow viewport */
+    .chat-container {
+      height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+
+    /* Additional mobile-specific layout fixes */
+    body {
+      position: fixed;
+      overflow: hidden;
+      width: 100%;
+      height: 100dvh;
+    }
   }
 
-  /* Ensure proper mobile viewport handling */
+  /* Ensure proper mobile viewport handling across all browsers */
   @supports (height: 100dvh) {
     html, body, #root {
       height: 100dvh;
+    }
+    
+    @media (max-width: 768px) {
+      html, body, #root {
+        height: 100dvh;
+        position: fixed;
+        overflow: hidden;
+        width: 100%;
+      }
+    }
+  }
+
+  /* iOS Safari specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+      html, body, #root {
+        height: -webkit-fill-available;
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+      }
     }
   }
 }
