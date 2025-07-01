@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -275,43 +276,43 @@ export const ChatInterface = ({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
-      <Card className="flex-1 flex flex-col glass-strong shadow-lg min-h-0">
-        <div className="p-4 glass">
-          <h2 className="text-lg font-medium text-card-foreground">Chat</h2>
-          <p className="text-sm text-muted-foreground">AI Assistant</p>
+    <div className="flex flex-col h-full">
+      <Card className="flex-1 flex flex-col glass-strong shadow-lg min-h-0 mb-2 sm:mb-0">
+        <div className="p-3 sm:p-4 glass">
+          <h2 className="text-base sm:text-lg font-medium text-card-foreground">Chat</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">AI Assistant</p>
         </div>
 
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-          <div className="p-4 space-y-4">
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 pb-4">
             {messages.map((message, index) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${
+                className={`flex gap-2 sm:gap-3 ${
                   message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl glass transition-all duration-200 ${
+                  className={`max-w-[90%] sm:max-w-[85%] p-2 sm:p-3 rounded-2xl glass transition-all duration-200 ${
                     message.role === "user"
-                      ? "bg-primary/20 text-foreground ml-8"
-                      : "bg-card/60 text-foreground mr-8"
+                      ? "bg-primary/20 text-foreground ml-4 sm:ml-8"
+                      : "bg-card/60 text-foreground mr-4 sm:mr-8"
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                       message.role === "user" 
                         ? "bg-primary/30 text-primary" 
                         : "bg-accent/30 text-accent-foreground"
                     }`}>
                       {message.role === "user" ? (
-                        <User className="w-3 h-3" />
+                        <User className="w-2 h-2 sm:w-3 sm:h-3" />
                       ) : (
-                        <Bot className="w-3 h-3" />
+                        <Bot className="w-2 h-2 sm:w-3 sm:h-3" />
                       )}
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm">
+                      <div className="text-xs sm:text-sm">
                         <MessageContent content={message.content} />
                       </div>
                       {message.toolUsed && (
@@ -332,14 +333,14 @@ export const ChatInterface = ({
             
             {isLoading && (
               <div className="flex justify-start">
-                <div className="glass bg-card/60 p-3 rounded-2xl mr-8">
+                <div className="glass bg-card/60 p-2 sm:p-3 rounded-2xl mr-4 sm:mr-8">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-accent/30 text-accent-foreground flex items-center justify-center">
-                      <Bot className="w-3 h-3" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent/30 text-accent-foreground flex items-center justify-center">
+                      <Bot className="w-2 h-2 sm:w-3 sm:h-3" />
                     </div>
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                      <span className="text-sm text-foreground">Thinking...</span>
+                      <span className="text-xs sm:text-sm text-foreground">Thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -352,7 +353,7 @@ export const ChatInterface = ({
 
       {/* File Upload Preview */}
       {uploadedFiles.length > 0 && (
-        <div className="p-3 glass rounded-xl my-2">
+        <div className="p-2 sm:p-3 glass rounded-xl mb-2">
           <div className="flex flex-wrap gap-2">
             {uploadedFiles.map((file) => (
               <div 
@@ -363,28 +364,28 @@ export const ChatInterface = ({
                   <img 
                     src={file.preview} 
                     alt={file.file.name}
-                    className="w-8 h-8 object-cover rounded"
+                    className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
                   />
                 )}
                 {file.type === 'video' && file.preview && (
                   <video 
                     src={file.preview}
-                    className="w-8 h-8 object-cover rounded"
+                    className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
                   />
                 )}
                 {file.type === 'file' && (
-                  <div className="w-8 h-8 bg-primary/20 rounded flex items-center justify-center">
-                    <File className="w-4 h-4 text-primary" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/20 rounded flex items-center justify-center">
+                    <File className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                   </div>
                 )}
-                <span className="text-sm text-foreground truncate max-w-24">
+                <span className="text-xs sm:text-sm text-foreground truncate max-w-16 sm:max-w-24">
                   {file.file.name}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => removeFile(file.id)}
-                  className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive rounded-full"
+                  className="h-4 w-4 sm:h-5 sm:w-5 p-0 hover:bg-destructive/20 hover:text-destructive rounded-full"
                 >
                   <X className="w-2 h-2" />
                 </Button>
@@ -394,8 +395,8 @@ export const ChatInterface = ({
         </div>
       )}
 
-      {/* Input Section */}
-      <div className="p-3 glass rounded-xl">
+      {/* Input Section - Fixed positioning for mobile */}
+      <div className="p-2 sm:p-3 glass rounded-xl bg-background/95 backdrop-blur-md border border-border/20 sticky bottom-0">
         <div className="flex gap-2">
           <input
             ref={fileInputRef}
@@ -409,28 +410,28 @@ export const ChatInterface = ({
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            className="btn-glass"
+            className="btn-glass flex-shrink-0"
           >
-            <Paperclip className="w-4 h-4" />
+            <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask me anything..."
-            className="flex-1 glass focus:shadow-md transition-all duration-200"
+            className="flex-1 glass focus:shadow-md transition-all duration-200 text-sm sm:text-base"
             disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
             size="sm"
-            className="btn-glass bg-primary/20 text-primary-foreground hover:bg-primary/30"
+            className="btn-glass bg-primary/20 text-primary-foreground hover:bg-primary/30 flex-shrink-0"
           >
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
           </Button>
         </div>
