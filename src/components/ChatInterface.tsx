@@ -1,24 +1,33 @@
-
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, User, Bot, Paperclip, X, Image, Video, File } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  User,
+  Bot,
+  Paperclip,
+  X,
+  Image,
+  Video,
+  File,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { chatStorage, ChatMessage, ChatHistory } from "@/utils/chatStorage";
 import { MessageContent } from "./MessageContent";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { 
-  setMessages, 
-  addMessage, 
-  updateMessage, 
-  setLoading, 
+import {
+  setMessages,
+  addMessage,
+  updateMessage,
+  setLoading,
   setCurrentChatId,
   addUploadedFile,
   removeUploadedFile,
-  clearUploadedFiles
+  clearUploadedFiles,
 } from "@/store/chatSlice";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,10 +44,12 @@ export const ChatInterface = ({
   chatId,
   onChatUpdate,
 }: ChatInterfaceProps) => {
-  const { messages, isLoading, uploadedFiles } = useAppSelector(state => state.chat);
-  const settings = useAppSelector(state => state.settings);
+  const { messages, isLoading, uploadedFiles } = useAppSelector(
+    (state) => state.chat
+  );
+  const settings = useAppSelector((state) => state.settings);
   const dispatch = useAppDispatch();
-  
+
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -53,8 +64,14 @@ export const ChatInterface = ({
 
   // Auto-scroll when messages change (only if auto-scroll is enabled)
   useEffect(() => {
-    if (settings.autoScroll && messagesEndRef.current && scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (
+      settings.autoScroll &&
+      messagesEndRef.current &&
+      scrollAreaRef.current
+    ) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -70,7 +87,8 @@ export const ChatInterface = ({
         const welcomeMessage: ChatMessage = {
           id: "1",
           role: "assistant",
-          content: "Hello! I'm your AI agent. I can help you with various tasks. What would you like me to do?",
+          content:
+            "Hello! I'm your AI agent. I can help you with various tasks. What would you like me to do?",
           timestamp: new Date().toISOString(),
         };
         dispatch(setMessages([welcomeMessage]));
@@ -85,17 +103,18 @@ export const ChatInterface = ({
     try {
       const maxMessages = parseInt(settings.maxMessages) || 100;
       const trimmedMessages = updatedMessages.slice(-maxMessages);
-      
+
       const chat: ChatHistory = {
         id: chatId,
-        name: trimmedMessages.length > 1 
-          ? trimmedMessages[1].content.slice(0, 50) + "..." 
-          : "New Chat",
+        name:
+          trimmedMessages.length > 1
+            ? trimmedMessages[1].content.slice(0, 50) + "..."
+            : "New Chat",
         messages: trimmedMessages, // Already strings, no conversion needed
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       await chatStorage.saveChat(chat);
       onChatUpdate(chat);
     } catch (error) {
@@ -105,17 +124,18 @@ export const ChatInterface = ({
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    
-    files.forEach(file => {
-      const fileId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-      let fileType: 'image' | 'video' | 'file' = 'file';
-      
-      if (file.type.startsWith('image/')) {
-        fileType = 'image';
-      } else if (file.type.startsWith('video/')) {
-        fileType = 'video';
+
+    files.forEach((file) => {
+      const fileId =
+        Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      let fileType: "image" | "video" | "file" = "file";
+
+      if (file.type.startsWith("image/")) {
+        fileType = "image";
+      } else if (file.type.startsWith("video/")) {
+        fileType = "video";
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const uploadedFile = {
@@ -124,25 +144,25 @@ export const ChatInterface = ({
           preview: e.target?.result as string,
           type: fileType,
         };
-        
+
         dispatch(addUploadedFile(uploadedFile));
       };
-      
-      if (fileType === 'image' || fileType === 'video') {
+
+      if (fileType === "image" || fileType === "video") {
         reader.readAsDataURL(file);
       } else {
         const uploadedFile = {
           id: fileId,
           file,
-          preview: '',
-          type: 'file',
+          preview: "",
+          type: "file",
         };
         dispatch(addUploadedFile(uploadedFile));
       }
     });
-    
+
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -170,16 +190,16 @@ export const ChatInterface = ({
     try {
       // Prepare conversation context (last 10 messages for context)
       const contextMessages = messages.slice(-10);
-      
+
       // Create FormData for multipart/form-data submission
       const formData = new FormData();
-      formData.append('message', currentInput);
-      formData.append('context', JSON.stringify(contextMessages));
-      formData.append('stream', 'true');
-      
+      formData.append("message", currentInput);
+      formData.append("context", JSON.stringify(contextMessages));
+      formData.append("stream", "true");
+
       // Append files to FormData
       uploadedFiles.forEach((uploadedFile, index) => {
-        formData.append('files', uploadedFile.file);
+        formData.append("files", uploadedFile.file);
       });
 
       const response = await fetch(`${settings.serverUrl}/chat`, {
@@ -228,11 +248,21 @@ export const ChatInterface = ({
             assistantContent += chunk;
           }
 
-          dispatch(updateMessage({ id: assistantId, content: assistantContent, toolUsed }));
+          dispatch(
+            updateMessage({
+              id: assistantId,
+              content: assistantContent,
+              toolUsed,
+            })
+          );
         }
       }
 
-      await saveChatHistory([...messages, userMessage, { ...assistantMessage, content: assistantContent, toolUsed }]);
+      await saveChatHistory([
+        ...messages,
+        userMessage,
+        { ...assistantMessage, content: assistantContent, toolUsed },
+      ]);
 
       if (toolUsed) {
         onToolUsed(toolUsed);
@@ -254,7 +284,8 @@ export const ChatInterface = ({
 
       toast({
         title: "Connection Error",
-        description: "Could not connect to local Python agent. Make sure it's running.",
+        description:
+          "Could not connect to local Python agent. Make sure it's running.",
         variant: "destructive",
       });
     } finally {
@@ -270,20 +301,16 @@ export const ChatInterface = ({
   };
 
   const getFileIcon = (type: string) => {
-    if (type === 'image') return <Image className="w-4 h-4" />;
-    if (type === 'video') return <Video className="w-4 h-4" />;
+    if (type === "image") return <Image className="w-4 h-4" />;
+    if (type === "video") return <Video className="w-4 h-4" />;
     return <File className="w-4 h-4" />;
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-md:h-[86%]">
+      {/* Chat Messages Area */}
       <Card className="flex-1 flex flex-col glass-strong shadow-lg min-h-0 mb-2 sm:mb-0">
-        <div className="p-3 sm:p-4 glass">
-          <h2 className="text-base sm:text-lg font-medium text-card-foreground">Chat</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">AI Assistant</p>
-        </div>
-
-        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+        <ScrollArea className="flex-1 min-h-0 sm:mb-10" ref={scrollAreaRef}>
           <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 pb-4">
             {messages.map((message, index) => (
               <div
@@ -300,11 +327,13 @@ export const ChatInterface = ({
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === "user" 
-                        ? "bg-primary/30 text-primary" 
-                        : "bg-accent/30 text-accent-foreground"
-                    }`}>
+                    <div
+                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.role === "user"
+                          ? "bg-primary/30 text-primary"
+                          : "bg-accent/30 text-accent-foreground"
+                      }`}
+                    >
                       {message.role === "user" ? (
                         <User className="w-2 h-2 sm:w-3 sm:h-3" />
                       ) : (
@@ -330,7 +359,7 @@ export const ChatInterface = ({
                 </div>
               </div>
             ))}
-            
+
             {isLoading && (
               <div className="flex justify-start">
                 <div className="glass bg-card/60 p-2 sm:p-3 rounded-2xl mr-4 sm:mr-8">
@@ -340,7 +369,9 @@ export const ChatInterface = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                      <span className="text-xs sm:text-sm text-foreground">Thinking...</span>
+                      <span className="text-xs sm:text-sm text-foreground">
+                        Thinking...
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -349,93 +380,93 @@ export const ChatInterface = ({
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
-      </Card>
-
-      {/* File Upload Preview */}
-      {uploadedFiles.length > 0 && (
-        <div className="p-2 sm:p-3 glass rounded-xl mb-2">
-          <div className="flex flex-wrap gap-2">
-            {uploadedFiles.map((file) => (
-              <div 
-                key={file.id}
-                className="flex items-center gap-2 p-2 glass rounded-lg bg-accent/10"
-              >
-                {file.type === 'image' && file.preview && (
-                  <img 
-                    src={file.preview} 
-                    alt={file.file.name}
-                    className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
-                  />
-                )}
-                {file.type === 'video' && file.preview && (
-                  <video 
-                    src={file.preview}
-                    className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
-                  />
-                )}
-                {file.type === 'file' && (
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/20 rounded flex items-center justify-center">
-                    <File className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-                  </div>
-                )}
-                <span className="text-xs sm:text-sm text-foreground truncate max-w-16 sm:max-w-24">
-                  {file.file.name}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeFile(file.id)}
-                  className="h-4 w-4 sm:h-5 sm:w-5 p-0 hover:bg-destructive/20 hover:text-destructive rounded-full"
+        {/* File Upload Preview */}
+        {uploadedFiles.length > 0 && (
+          <div className="p-2 sm:p-3 glass rounded-xl mb-2">
+            <div className="flex flex-wrap gap-2">
+              {uploadedFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center gap-2 p-2 glass rounded-lg bg-accent/10"
                 >
-                  <X className="w-2 h-2" />
-                </Button>
-              </div>
-            ))}
+                  {file.type === "image" && file.preview && (
+                    <img
+                      src={file.preview}
+                      alt={file.file.name}
+                      className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
+                    />
+                  )}
+                  {file.type === "video" && file.preview && (
+                    <video
+                      src={file.preview}
+                      className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
+                    />
+                  )}
+                  {file.type === "file" && (
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/20 rounded flex items-center justify-center">
+                      <File className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                    </div>
+                  )}
+                  <span className="text-xs sm:text-sm text-foreground truncate max-w-16 sm:max-w-24">
+                    {file.file.name}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(file.id)}
+                    className="h-4 w-4 sm:h-5 sm:w-5 p-0 hover:bg-destructive/20 hover:text-destructive rounded-full"
+                  >
+                    <X className="w-2 h-2" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Input Section - Fixed positioning for mobile */}
+        <div className="p-2 sm:p-3 glass rounded-xl bg-background/95 backdrop-blur-md border border-border/20 sticky bottom-0">
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-glass flex-shrink-0"
+            >
+              <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me anything..."
+              className="flex-1 glass focus:shadow-md transition-all duration-200 text-sm sm:text-base"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleSend}
+              disabled={
+                isLoading || (!input.trim() && uploadedFiles.length === 0)
+              }
+              size="sm"
+              className="btn-glass bg-primary/20 text-primary-foreground hover:bg-primary/30 flex-shrink-0"
+            >
+              {isLoading ? (
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+              ) : (
+                <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+              )}
+            </Button>
           </div>
         </div>
-      )}
-
-      {/* Input Section - Fixed positioning for mobile */}
-      <div className="p-2 sm:p-3 glass rounded-xl bg-background/95 backdrop-blur-md border border-border/20 sticky bottom-0">
-        <div className="flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="btn-glass flex-shrink-0"
-          >
-            <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me anything..."
-            className="flex-1 glass focus:shadow-md transition-all duration-200 text-sm sm:text-base"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
-            size="sm"
-            className="btn-glass bg-primary/20 text-primary-foreground hover:bg-primary/30 flex-shrink-0"
-          >
-            {isLoading ? (
-              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-            ) : (
-              <Send className="w-3 h-3 sm:w-4 sm:h-4" />
-            )}
-          </Button>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 };
