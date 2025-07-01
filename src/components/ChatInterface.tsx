@@ -70,7 +70,7 @@ export const ChatInterface = ({
           id: "1",
           role: "assistant",
           content: "Hello! I'm your AI agent. I can help you with various tasks. What would you like me to do?",
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         };
         dispatch(setMessages([welcomeMessage]));
         await saveChatHistory([welcomeMessage]);
@@ -90,7 +90,10 @@ export const ChatInterface = ({
         name: trimmedMessages.length > 1 
           ? trimmedMessages[1].content.slice(0, 50) + "..." 
           : "New Chat",
-        messages: trimmedMessages,
+        messages: trimmedMessages.map(msg => ({
+          ...msg,
+          timestamp: typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp
+        })),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -156,10 +159,11 @@ export const ChatInterface = ({
       id: Date.now().toString(),
       role: "user",
       content: input,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
     dispatch(addMessage(userMessage));
+    const currentInput = input;
     setInput("");
     dispatch(clearUploadedFiles());
     dispatch(setLoading(true));
@@ -169,23 +173,20 @@ export const ChatInterface = ({
       // Prepare conversation context (last 10 messages for context)
       const contextMessages = messages.slice(-10);
       
+      // Create FormData for multipart/form-data submission
+      const formData = new FormData();
+      formData.append('message', currentInput);
+      formData.append('context', JSON.stringify(contextMessages));
+      formData.append('stream', 'true');
+      
+      // Append files to FormData
+      uploadedFiles.forEach((uploadedFile, index) => {
+        formData.append('files', uploadedFile.file);
+      });
+
       const response = await fetch(`${settings.serverUrl}/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: input,
-          conversation_id: chatId,
-          stream: true,
-          files: uploadedFiles.map(f => ({ 
-            name: f.file.name, 
-            type: f.file.type,
-            size: f.file.size,
-            preview: f.preview 
-          })),
-          context: contextMessages,
-        }),
+        body: formData, // Send FormData instead of JSON
       });
 
       if (!response.ok || !response.body) {
@@ -200,7 +201,7 @@ export const ChatInterface = ({
         id: assistantId,
         role: "assistant",
         content: "",
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
 
       dispatch(addMessage(assistantMessage));
@@ -245,8 +246,8 @@ export const ChatInterface = ({
       const mockResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `I understand you want me to: "${input}". Currently, I'm not connected to the local Python agent. Please make sure your Python agent is running on ${settings.serverUrl} with a /chat endpoint.`,
-        timestamp: new Date(),
+        content: `I understand you want me to: "${currentInput}". Currently, I'm not connected to the local Python agent. Please make sure your Python agent is running on ${settings.serverUrl} with a /chat endpoint.`,
+        timestamp: new Date().toISOString(),
       };
 
       dispatch(addMessage(mockResponse));
@@ -323,7 +324,7 @@ export const ChatInterface = ({
                       )}
                       {settings.showTimestamps && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {message.timestamp.toLocaleTimeString()}
+                          {new Date(message.timestamp).toLocaleTimeString()}
                         </p>
                       )}
                     </div>

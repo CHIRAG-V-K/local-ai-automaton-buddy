@@ -5,7 +5,7 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  timestamp: string; // Changed from Date to string for serialization
   toolUsed?: string;
   files?: Array<{ name: string; type: string; preview?: string }>;
 }

@@ -8,6 +8,13 @@ export const store = configureStore({
     settings: settingsReducer,
     chat: chatReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['chat/addUploadedFile'],
+        ignoredPaths: ['chat.uploadedFiles'],
+      },
+    }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
