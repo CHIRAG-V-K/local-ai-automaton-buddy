@@ -90,10 +90,7 @@ export const ChatInterface = ({
         name: trimmedMessages.length > 1 
           ? trimmedMessages[1].content.slice(0, 50) + "..." 
           : "New Chat",
-        messages: trimmedMessages.map(msg => ({
-          ...msg,
-          timestamp: typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp
-        })),
+        messages: trimmedMessages, // Already strings, no conversion needed
         createdAt: new Date(),
         updatedAt: new Date(),
       };

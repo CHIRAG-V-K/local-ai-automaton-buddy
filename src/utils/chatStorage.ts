@@ -3,7 +3,7 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: Date;
+  timestamp: string; // Changed from Date to string for consistency
   toolUsed?: string;
 }
 
