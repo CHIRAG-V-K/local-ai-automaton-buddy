@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ChatInterface } from '@/components/ChatInterface';
 import { ToolResults } from '@/components/ToolResults';
@@ -11,18 +10,26 @@ import { Button } from '@/components/ui/button';
 import { Settings, Bot, History, Plus, Wrench, Menu } from 'lucide-react';
 import { chatStorage, ChatHistory } from '@/utils/chatStorage';
 import { useToast } from '@/hooks/use-toast';
+import { useAgentStatus } from '@/hooks/useAgentStatus';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type SidebarPanel = 'history' | 'config' | 'tools' | null;
 
 const Index = () => {
   const [activeSidebarPanel, setActiveSidebarPanel] = useState<SidebarPanel>(null);
-  const [agentStatus, setAgentStatus] = useState<'idle' | 'thinking' | 'working'>('idle');
-  const [lastToolUsed, setLastToolUsed] = useState<string | null>(null);
   const [currentChatId, setCurrentChatId] = useState<string>('');
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { toast } = useToast();
+
+  // Use unified agent status management
+  const {
+    status: agentStatus,
+    isConnected,
+    lastToolUsed,
+    updateActivityStatus,
+    updateLastToolUsed,
+  } = useAgentStatus('http://localhost:8000'); // Default server URL
 
   useEffect(() => {
     // Initialize with a new chat on first load
@@ -215,12 +222,13 @@ const Index = () => {
               <StatusBar 
                 status={agentStatus} 
                 lastToolUsed={lastToolUsed}
+                isConnected={isConnected}
               />
             </div>
             {currentChatId && (
               <ChatInterface 
-                onStatusChange={setAgentStatus}
-                onToolUsed={setLastToolUsed}
+                onStatusChange={updateActivityStatus}
+                onToolUsed={updateLastToolUsed}
                 chatId={currentChatId}
                 onChatUpdate={handleChatUpdate}
               />

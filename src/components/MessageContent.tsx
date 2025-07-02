@@ -1,63 +1,122 @@
 
-import React from 'react';
-import { CodeBlock } from './CodeBlock';
+import { CodeBlock } from "./CodeBlock";
 
 interface MessageContentProps {
   content: string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = ({ content }) => {
-  // Regex to match code blocks with optional language specification
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  
-  // Split content by code blocks
-  const parts: Array<{ type: 'text' | 'code'; content: string; language?: string }> = [];
-  let lastIndex = 0;
-  let match;
+type ContentPart = {
+  type: 'text' | 'code' | 'highlight';
+  content: string;
+  language?: string;
+};
 
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    // Add text before code block
-    if (match.index > lastIndex) {
-      const textContent = content.slice(lastIndex, match.index).trim();
+export const MessageContent = ({ content }: MessageContentProps) => {
+  const parseContent = (text: string): ContentPart[] => {
+    const parts: ContentPart[] = [];
+    let currentIndex = 0;
+
+    // First, find all code blocks
+    const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+    const highlightRegex = /\*\*(.*?)\*\*/g;
+    
+    // Collect all matches with their positions
+    const matches: Array<{ type: 'code' | 'highlight'; start: number; end: number; content: string; language?: string }> = [];
+    
+    let match;
+    
+    // Find code blocks
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      matches.push({
+        type: 'code',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[2] || '',
+        language: match[1] || 'text'
+      });
+    }
+    
+    // Find highlights
+    while ((match = highlightRegex.exec(text)) !== null) {
+      matches.push({
+        type: 'highlight',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[1] || ''
+      });
+    }
+    
+    // Sort matches by position
+    matches.sort((a, b) => a.start - b.start);
+    
+    // Build parts array
+    matches.forEach((match) => {
+      // Add text before this match
+      if (currentIndex < match.start) {
+        const textContent = text.slice(currentIndex, match.start);
+        if (textContent) {
+          parts.push({ type: 'text', content: textContent });
+        }
+      }
+      
+      // Add the match
+      parts.push({
+        type: match.type,
+        content: match.content,
+        language: match.language
+      });
+      
+      currentIndex = match.end;
+    });
+    
+    // Add remaining text
+    if (currentIndex < text.length) {
+      const textContent = text.slice(currentIndex);
       if (textContent) {
         parts.push({ type: 'text', content: textContent });
       }
     }
     
-    // Add code block
-    const language = match[1] || 'text';
-    const code = match[2].trim();
-    if (code) {
-      parts.push({ type: 'code', content: code, language });
+    // If no matches found, return the entire content as text
+    if (parts.length === 0) {
+      parts.push({ type: 'text', content: text });
     }
     
-    lastIndex = match.index + match[0].length;
-  }
-  
-  // Add remaining text
-  if (lastIndex < content.length) {
-    const remainingContent = content.slice(lastIndex).trim();
-    if (remainingContent) {
-      parts.push({ type: 'text', content: remainingContent });
-    }
-  }
-  
-  // If no code blocks found, return the original content
-  if (parts.length === 0) {
-    return <span className="whitespace-pre-wrap">{content}</span>;
-  }
+    return parts;
+  };
+
+  const parts = parseContent(content);
 
   return (
-    <div>
-      {parts.map((part, index) => (
-        <div key={index}>
-          {part.type === 'text' ? (
-            <span className="whitespace-pre-wrap">{part.content}</span>
-          ) : (
-            <CodeBlock code={part.content} language={part.language} />
-          )}
-        </div>
-      ))}
+    <div className="message-content">
+      {parts.map((part, index) => {
+        switch (part.type) {
+          case 'code':
+            return (
+              <CodeBlock
+                key={index}
+                code={part.content}
+                language={part.language || 'text'}
+              />
+            );
+          case 'highlight':
+            return (
+              <span
+                key={index}
+                className="highlight-text px-1.5 py-0.5 mx-0.5 rounded-md bg-yellow-200/80 dark:bg-yellow-800/40 text-yellow-900 dark:text-yellow-200 font-medium"
+              >
+                {part.content}
+              </span>
+            );
+          case 'text':
+          default:
+            return (
+              <span key={index} className="whitespace-pre-wrap">
+                {part.content}
+              </span>
+            );
+        }
+      })}
     </div>
   );
 };

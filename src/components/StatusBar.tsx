@@ -1,15 +1,23 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Clock, Zap } from "lucide-react";
+import { Activity, Clock, Zap, Wifi, WifiOff } from "lucide-react";
+
+export type AgentStatus = "offline" | "connecting" | "idle" | "thinking" | "working";
 
 interface StatusBarProps {
-  status: "idle" | "thinking" | "working";
+  status: AgentStatus;
   lastToolUsed: string | null;
+  isConnected: boolean;
 }
 
-export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
+export const StatusBar = ({ status, lastToolUsed, isConnected }: StatusBarProps) => {
   const getStatusColor = () => {
     switch (status) {
+      case "offline":
+        return "bg-red-500";
+      case "connecting":
+        return "bg-yellow-500";
       case "idle":
         return "bg-green-500";
       case "thinking":
@@ -23,6 +31,10 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
 
   const getStatusText = () => {
     switch (status) {
+      case "offline":
+        return "Agent Offline";
+      case "connecting":
+        return "Connecting...";
       case "idle":
         return "Ready";
       case "thinking":
@@ -34,11 +46,19 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
     }
   };
 
+  const getConnectionIcon = () => {
+    if (status === "offline") {
+      return <WifiOff className="w-4 h-4 text-red-500" />;
+    }
+    return <Wifi className="w-4 h-4 text-green-500" />;
+  };
+
   return (
     <Card className="p-3 glass shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
+            {getConnectionIcon()}
             <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
             <p className="text-xs sm:text-xs text-muted-foreground">
               AI Assistant is
@@ -53,7 +73,7 @@ export const StatusBar = ({ status, lastToolUsed }: StatusBarProps) => {
         </div>
 
         <div className="flex items-center gap-3">
-          {lastToolUsed && (
+          {lastToolUsed && isConnected && (
             <div className="flex items-center gap-2">
               <Zap className="w-3 h-3 text-primary" />
               <Badge
