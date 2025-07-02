@@ -2,6 +2,23 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
+const validateAndFormatUrl = (url: string): string => {
+  // Remove any trailing slashes
+  const trimmedUrl = url.trim().replace(/\/+$/, '');
+  
+  // Check if URL starts with http:// or https://
+  if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+    return `http://${trimmedUrl}`;
+  }
+  
+  // Fix common malformed URLs like http:/192.168.1.1 (missing slash)
+  if (trimmedUrl.match(/^https?:\/[^\/]/)) {
+    return trimmedUrl.replace(/^(https?:\/)(.)/, '$1/$2');
+  }
+  
+  return trimmedUrl;
+};
+
 export const useAutoConnect = (serverUrl: string) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -10,7 +27,8 @@ export const useAutoConnect = (serverUrl: string) => {
   const testConnection = async (silent: boolean = false) => {
     setIsConnecting(true);
     try {
-      const response = await fetch(`${serverUrl}/health`);
+      const formattedUrl = validateAndFormatUrl(serverUrl);
+      const response = await fetch(`${formattedUrl}/health`);
       
       if (response.ok) {
         setIsConnected(true);
@@ -40,6 +58,12 @@ export const useAutoConnect = (serverUrl: string) => {
   };
 
   useEffect(() => {
+    if (!serverUrl) {
+      setIsConnected(false);
+      setIsConnecting(false);
+      return;
+    }
+
     // Auto-connect on mount
     testConnection(true);
     

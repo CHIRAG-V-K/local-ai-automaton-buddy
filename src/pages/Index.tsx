@@ -11,6 +11,7 @@ import { Settings, Bot, History, Plus, Wrench, Menu } from 'lucide-react';
 import { chatStorage, ChatHistory } from '@/utils/chatStorage';
 import { useToast } from '@/hooks/use-toast';
 import { useAgentStatus } from '@/hooks/useAgentStatus';
+import { useAppSelector } from '@/hooks/useAppSelector';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type SidebarPanel = 'history' | 'config' | 'tools' | null;
@@ -21,15 +22,18 @@ const Index = () => {
   const [currentChat, setCurrentChat] = useState<ChatHistory | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { toast } = useToast();
+  
+  // Get server URL from settings
+  const settings = useAppSelector(state => state.settings);
 
-  // Use unified agent status management
+  // Use unified agent status management with settings-based server URL
   const {
     status: agentStatus,
     isConnected,
     lastToolUsed,
     updateActivityStatus,
     updateLastToolUsed,
-  } = useAgentStatus('http://localhost:8000'); // Default server URL
+  } = useAgentStatus(settings.serverUrl);
 
   useEffect(() => {
     // Initialize with a new chat on first load
